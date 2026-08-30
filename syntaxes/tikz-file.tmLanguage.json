@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "text.tex.latex.tikz-file",
+  "name": "TikZ",
+  "comment": "The grammar for a .tikz file: a figure that is picture body from the first line, with no \\begin{tikzpicture} anywhere in it because the caller supplies one. There are no rules of its own here. A fragment is still LaTeX -- % comments, control sequences, \\begin{axis} -- so the host grammar does that work, and the two TikZ grammars are injected on top exactly as they are into a .tex file. What the fragment lacks is the tikzpicture scope those injections key on, and that is what the root scope name replaces: it ends in .tikz-file, which the injection selectors name directly, so the whole file counts as a picture body.\n\nThe name also has to *start* with text.tex.latex, since scope selectors match by dotted prefix: that is what keeps the existing L:text.tex.latex selector -- and any theme rule written against LaTeX -- applying here without a second clause.",
+
+  "patterns": [
+    { "include": "text.tex.latex" }
+  ]
+}

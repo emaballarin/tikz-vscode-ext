@@ -72,12 +72,15 @@ const registry = new vsctm.Registry({
   getInjections: (scopeName) => (raw ? undefined : INJECT_INTO[scopeName]),
 });
 
-const grammar = await registry.loadGrammar('text.tex.latex');
-if (!grammar) throw new Error('could not load text.tex.latex');
+// A .tikz file is a picture body on its own and has a root grammar of its own; anything
+// else is a LaTeX document that happens to contain figures.
+const root = file.endsWith('.tikz') ? 'text.tex.latex.tikz-file' : 'text.tex.latex';
+const grammar = await registry.loadGrammar(root);
+if (!grammar) throw new Error(`could not load ${root}`);
 
 // Drop only the root scopes, which are on every token and tell us nothing. The tikz
 // environment scope stays visible: it is the injection anchor, so seeing it is the point.
-const NOISE = /^(text\.tex\.latex|text\.tex)$/;
+const NOISE = /^(text\.tex\.latex(\.tikz-file)?|text\.tex)$/;
 
 const text = fs.readFileSync(file, 'utf8');
 let stack = vsctm.INITIAL;

@@ -17,11 +17,24 @@
   "activationEvents": [
     "onLanguage:latex",
     "onLanguage:tex",
+    "onLanguage:tikz",
     "onCommand:tikz.build",
     "onCommand:tikz.view",
     "onCommand:tikz.rebuildStyleIndex"
   ],
   "contributes": {
+    "languages": [
+      {
+        "id": "tikz",
+        "aliases": [
+          "TikZ"
+        ],
+        "extensions": [
+          ".tikz"
+        ],
+        "configuration": "./syntaxes/tikz-language-configuration.json"
+      }
+    ],
     "commands": [
       {
         "command": "tikz.build",
@@ -108,21 +121,35 @@
           "tikzMacro": ["variable.other.tikz"],
           "tikzStyle": ["entity.name.type.tikz"]
         }
+      },
+      {
+        "language": "tikz",
+        "scopes": {
+          "tikzMacro": ["variable.other.tikz"],
+          "tikzStyle": ["entity.name.type.tikz"]
+        }
       }
     ],
     "grammars": [
       {
+        "language": "tikz",
+        "scopeName": "text.tex.latex.tikz-file",
+        "path": "./syntaxes/tikz-file.tmLanguage.json"
+      },
+      {
         "scopeName": "tikz.injection",
         "path": "./syntaxes/tikz-injection.tmLanguage.json",
         "injectTo": [
-          "text.tex.latex"
+          "text.tex.latex",
+          "text.tex.latex.tikz-file"
         ]
       },
       {
         "scopeName": "tikz.toplevel",
         "path": "./syntaxes/tikz-toplevel.tmLanguage.json",
         "injectTo": [
-          "text.tex.latex"
+          "text.tex.latex",
+          "text.tex.latex.tikz-file"
         ]
       }
     ]

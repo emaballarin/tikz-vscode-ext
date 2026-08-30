@@ -25,6 +25,14 @@ The negations at the end of the selector are load-bearing, and one of them is a 
 
 The same effect is why there is no rule marking `{` and `}` at path level: an `L:` injection outruns the *host's* end patterns too, so a bare `}` rule steals the closing brace of constructs like `\textbf{...}` and leaves them open for the rest of the file.
 
+## `.tikz` files
+
+A figure kept in a file of its own is picture body from the first line: the `\begin{tikzpicture}` sits in the parent that `\input`s it. Nothing establishes the scope the injection keys on, so a fragment cannot be highlighted as a `.tex` file is. `.tikz` is therefore a language in its own right, and `syntaxes/tikz-file.tmLanguage.json` is its grammar. That grammar carries no rules of its own: a fragment is still LaTeX, so it includes the stock LaTeX grammar and leaves the TikZ to the same two injections, which reach it through its root scope name.
+
+That name, `text.tex.latex.tikz-file`, is what stands in for the missing `tikzpicture`, and it is read at both ends. `tikz-injection` names it in a second clause of its selector, and that is what puts the path rules over the whole file. Scope selectors also match by dotted prefix, so a name beginning `text.tex.latex` is already matched by `tikz-toplevel`'s selector — `\tikzset{...}` at the head of a fragment colours as it does in a preamble — and by any theme rule written for LaTeX.
+
+Both tokenising tools take the root grammar from the file's extension, so pointing them at a `.tikz` file shows what the editor shows.
+
 ## What a grammar cannot do
 
 Regexes have no memory of the rest of the file, so anything that needs to *know* something cannot live here. `\def`'ed macros and `/.style` names are the two cases that matter, and they are handled by a semantic token provider instead (`src/semantic.js`), which scans the document and the workspace and reports `tikzMacro` and `tikzStyle` for names it can prove were defined. That is the half of the highlighting that needs `editor.semanticTokenColorCustomizations.enabled`.

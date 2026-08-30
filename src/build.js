@@ -139,7 +139,7 @@ function activeFigure(figureFolders) {
   const active = vscode.window.activeTextEditor?.document;
   const isFigure =
     active?.languageId &&
-    /^(latex|tex)$/.test(active.languageId) &&
+    /^(latex|tex|tikz)$/.test(active.languageId) &&
     figureFolders.test(path.dirname(active.uri.fsPath));
   return isFigure ? active : null;
 }

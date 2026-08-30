@@ -52,7 +52,14 @@ const registry = new vsctm.Registry({
   getInjections: (scopeName) => INJECT_INTO[scopeName],
 });
 
-const grammar = await registry.loadGrammar('text.tex.latex');
+// A .tikz file is a picture body on its own and has a root grammar of its own; anything
+// else is a LaTeX document that happens to contain figures.
+const grammars = {
+  'text.tex.latex': await registry.loadGrammar('text.tex.latex'),
+  'text.tex.latex.tikz-file': await registry.loadGrammar('text.tex.latex.tikz-file'),
+};
+const rootFor = (file) =>
+  grammars[file.endsWith('.tikz') ? 'text.tex.latex.tikz-file' : 'text.tex.latex'];
 const files = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 
 // A file that ends mid-environment is normal for the fragments in *-figs/, which are
@@ -61,6 +68,7 @@ let flagged = 0;
 let totalOurs = 0;
 
 for (const file of files) {
+  const grammar = rootFor(file);
   let stack = vsctm.INITIAL;
   let ours = 0;
   let lineNo = 0;

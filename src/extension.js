@@ -5,7 +5,7 @@ const { StyleIndex } = require('./styleIndex');
 const { TikzSemanticTokensProvider } = require('./semantic');
 const { runBuildAndReport, viewAndReport } = require('./build');
 
-const LANGUAGES = ['latex', 'tex'];
+const LANGUAGES = ['latex', 'tex', 'tikz'];
 
 /** @param {vscode.ExtensionContext} context */
 async function activate(context) {

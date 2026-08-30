@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "scopeName": "tikz.injection",
-  "comment": "Injected into the stock LaTeX grammar wherever it has already established a tikzpicture. The negations matter: inside a tikzpicture, maths, comments and verbatim are ordinary LaTeX and must be left alone, and excluding them here is what keeps every rule below free of guards. The last one negates a scope of our own -- see #calc-coordinate, which needs the injection to stop re-entering a region this grammar has already claimed.",
-  "injectionSelector": "L:meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz",
+  "comment": "Injected into the stock LaTeX grammar wherever it has already established a tikzpicture, and -- the second clause of the selector -- everywhere in a .tikz file, which is a picture body with no tikzpicture around it. That clause excludes the tikzpicture scope only so a picture written out in full inside a fragment matches one clause rather than both. The negations matter: inside a tikzpicture, maths, comments and verbatim are ordinary LaTeX and must be left alone, and excluding them here is what keeps every rule below free of guards. The last one negates a scope of our own -- see #calc-coordinate, which needs the injection to stop re-entering a region this grammar has already claimed.",
+  "injectionSelector": "L:meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz, L:text.tex.latex.tikz-file -meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz",
 
   "patterns": [ { "include": "#picture-body" } ],
 
