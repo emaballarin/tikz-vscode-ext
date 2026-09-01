@@ -1,7 +1,7 @@
 'use strict';
 
 const vscode = require('vscode');
-const { execFile } = require('node:child_process');
+const { execFile, spawn } = require('node:child_process');
 const path = require('node:path');
 
 const TIMEOUT_MS = 10 * 60 * 1000;
@@ -188,9 +188,9 @@ async function readStatus(cwd) {
  *
  * The build script may hand its output over itself, but only has reason to when the
  * output changed. Rebuilding the same figure, or looking at a chapter while the figure
- * tab sits behind it, leaves the viewer showing something else. This forces it: `open -a`
- * both opens the file and raises the window, and a viewer already holding that file
- * raises the tab rather than duplicating it.
+ * tab sits behind it, leaves the viewer showing something else. This forces it: the
+ * viewer is asked to open the file, and one already holding it raises that tab rather
+ * than duplicating it.
  */
 async function viewAndReport() {
   try {
@@ -228,15 +228,46 @@ async function view() {
     vscode.window.showErrorMessage('TikZ: no viewer found — set tikz.viewer.');
     return;
   }
+  const binary = await executable(app);
+  if (!binary) {
+    vscode.window.showErrorMessage(`TikZ: ${path.basename(app)} holds no executable to run.`);
+    return;
+  }
 
-  const darwin = process.platform === 'darwin';
-  execFile(darwin ? 'open' : app, darwin ? ['-a', app, pdf] : [pdf], (error) => {
-    if (error) {
-      vscode.window.showErrorMessage(
-        `TikZ: could not view ${path.basename(pdf)} — ${error.message}`,
-      );
-    }
+  // The binary is run directly rather than through `open -a`. TeXstudio's bundle lists
+  // only tex, bib, sty, cls and mp in CFBundleDocumentTypes, so `open` accepts a PDF,
+  // exits 0, raises the window -- and drops the file, leaving whatever tab was already
+  // showing. Handing the path to the executable is what the running instance acts on.
+  //
+  // Detached, since a viewer started this way is the application itself and must outlive
+  // the window that asked for it. A second invocation forwards the file and exits, so
+  // only the failure to spawn is worth reporting; an exit code arrives too late to mean
+  // anything.
+  const child = spawn(binary, [pdf], { detached: true, stdio: 'ignore' });
+  child.on('error', (error) => {
+    vscode.window.showErrorMessage(
+      `TikZ: could not view ${path.basename(pdf)} — ${error.message}`,
+    );
   });
+  child.unref();
+}
+
+/**
+ * The program to run for a viewer. A macOS application is a directory, so the setting
+ * may name either the bundle or the executable inside it; the bundle holds exactly one.
+ * @param {string} app
+ * @returns {Promise<string | null>}
+ */
+async function executable(app) {
+  if (!app.endsWith('.app')) return app;
+  try {
+    const dir = path.join(app, 'Contents', 'MacOS');
+    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(dir));
+    const [name] = entries.find(([, type]) => type === vscode.FileType.File) ?? [];
+    return name ? path.join(dir, name) : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
