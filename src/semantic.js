@@ -30,11 +30,16 @@ class TikzSemanticTokensProvider {
         this._onDidChangeSemanticTokens = new vscode.EventEmitter();
         this.onDidChangeSemanticTokens = this._onDidChangeSemanticTokens.event;
 
-        // A new style in the preamble changes how every open figure file should look.
-        styleIndex.onDidChange(() => this._onDidChangeSemanticTokens.fire());
-
         /** @type {{uri: string, version: number, tokens: vscode.SemanticTokens} | null} */
         this._cache = null;
+
+        // A new style in the preamble changes how every open figure file should look. The
+        // cache is keyed on the document alone, so it has to go too, or the refresh asked
+        // for here is answered with the tokens from before the change.
+        styleIndex.onDidChange(() => {
+            this._cache = null;
+            this._onDidChangeSemanticTokens.fire();
+        });
     }
 
     static get legend() {

@@ -257,6 +257,27 @@ test("a known style is marked only where it is applied, not where a key shares i
     );
 });
 
+test("a style the index learns reaches a document whose text has not changed", async () => {
+    // The order of a window opening with a figure in it: the figure asks for tokens before
+    // the workspace scan has finished, then the scan lands and asks for a refresh.
+    const index = fakeIndex();
+    const provider = new TikzSemanticTokensProvider(index);
+    let refreshes = 0;
+    provider.onDidChangeSemanticTokens(() => refreshes++);
+    const document = documentOf("\\begin{tikzpicture}\\draw [neuron] (0,0);\\end{tikzpicture}");
+    assert.strictEqual(provider.provideDocumentSemanticTokens(document).pushed.length, 0);
+
+    index.names = new Set(["neuron"]);
+    index.emitter.fire();
+    assert.strictEqual(refreshes, 1, "the provider should ask to be asked again");
+    const { pushed } = provider.provideDocumentSemanticTokens(document);
+    assert.deepStrictEqual(
+        pushed.map((t) => t.type),
+        ["tikzStyle"],
+        "and then answer with the new style"
+    );
+});
+
 // --- style index ------------------------------------------------------------------------
 
 test("the style index collects definitions from every file it is given", async () => {
