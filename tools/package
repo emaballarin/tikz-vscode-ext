@@ -9,6 +9,8 @@ set -e
 
 cd "$(dirname "$0")/.."
 field() { sed -n "s/.*\"$1\": \"\([^\"]*\)\".*/\1/p" package.json | head -1; }
+# In place, without sed -i: BSD sed wants `-i ''` and GNU sed reads that '' as the script.
+edit() { sed "$1" "$2" > "$2.tmp" && mv "$2.tmp" "$2"; }
 
 name=$(field name)
 publisher=$(field publisher)
@@ -41,9 +43,9 @@ for img in $(sed -n 's/.*](\(images\/[^)]*\)).*/\1/p' README.md | sort -u); do
     # the page stays broken for minutes after the push lands. Push first, then package.
     [ -z "$(git branch -r --contains "$sha" 2>/dev/null)" ] &&
       echo "warning: $sha is not on any remote yet; push before packaging or the image URL will 404" >&2
-    sed -i '' "s|](${img})|](https://raw.githubusercontent.com/${slug}/${sha}/${img})|g" "$stage/extension/README.md"
+    edit "s|](${img})|](https://raw.githubusercontent.com/${slug}/${sha}/${img})|g" "$stage/extension/README.md"
   else
-    sed -i '' "\|](${img})|d" "$stage/extension/README.md"
+    edit "\|](${img})|d" "$stage/extension/README.md"
   fi
 done
 
