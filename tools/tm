@@ -1,5 +1,60 @@
 #!/bin/sh
 # Run a script under the Node runtime bundled inside VS Code's Electron.
-# This machine has no standalone node/npm, and none is needed: the extension has zero
-# runtime dependencies, and the tokeniser harness borrows VS Code's own libraries.
-exec env ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" "$@"
+# No standalone node/npm is needed: the extension has zero runtime dependencies, and the
+# tokeniser harness borrows VS Code's own libraries. Those sit inside an asar archive,
+# which only Electron can read, so this is also what lets the harness load them at all.
+#
+# $VSCODE picks the installation: a macOS .app bundle, a Linux install folder (the one
+# holding resources/app), or the executable itself. Without it the usual places are tried
+# in turn, Stable before Insiders.
+set -e
+
+# The executable inside an installation, or nothing. Both platforms name it in
+# product.json; a bundle too old to say is tried under the names it has carried.
+binary() {
+  if [ -f "$1" ] && [ -x "$1" ]; then
+    echo "$1"
+  elif [ -d "$1/Contents/MacOS" ]; then
+    name=$(sed -n 's/.*"darwinExecutable": *"\([^"]*\)".*/\1/p' "$1/Contents/Resources/app/product.json" 2>/dev/null | head -1)
+    for candidate in "$name" Electron Code; do
+      if [ -n "$candidate" ] && [ -x "$1/Contents/MacOS/$candidate" ]; then
+        echo "$1/Contents/MacOS/$candidate"
+        return
+      fi
+    done
+  elif [ -f "$1/resources/app/product.json" ]; then
+    name=$(sed -n 's/.*"applicationName": *"\([^"]*\)".*/\1/p' "$1/resources/app/product.json" | head -1)
+    if [ -n "$name" ] && [ -x "$1/$name" ]; then
+      echo "$1/$name"
+    fi
+  fi
+}
+
+if [ -n "$VSCODE" ]; then
+  code=$(binary "$VSCODE")
+  if [ -z "$code" ]; then
+    echo "tm: VSCODE=$VSCODE holds no VS Code executable" >&2
+    exit 1
+  fi
+else
+  for place in \
+    "/Applications/Visual Studio Code.app" \
+    "/Applications/Visual Studio Code - Insiders.app" \
+    "$HOME/Applications/Visual Studio Code.app" \
+    "$HOME/Applications/Visual Studio Code - Insiders.app" \
+    /usr/share/code \
+    /usr/share/code-insiders \
+    /opt/visual-studio-code \
+    /opt/visual-studio-code-insiders \
+    /snap/code/current/usr/share/code \
+    /snap/code-insiders/current/usr/share/code-insiders; do
+    code=$(binary "$place")
+    [ -n "$code" ] && break
+  done
+  if [ -z "$code" ]; then
+    echo "tm: no VS Code found in the usual places; point VSCODE at one" >&2
+    exit 1
+  fi
+fi
+
+exec env ELECTRON_RUN_AS_NODE=1 "$code" "$@"

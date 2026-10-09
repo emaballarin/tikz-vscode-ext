@@ -1,6 +1,6 @@
 // Does a theme actually have a colour for the scopes this grammar uses?
 //
-//   ./tools/tm tools/theme-check.mjs             # the theme you are using
+//   ./tools/tm tools/theme-check.mjs             # the theme you are using, in that VS Code
 //   ./tools/tm tools/theme-check.mjs <theme.json>...
 //
 // Mapping TikZ onto conventional scopes is only worth anything if themes really style
@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { findVSCode } from "./vscode.mjs";
 
 // Each entry is the full scope stack the grammar puts on one kind of token, outermost
 // first. A space-separated `name` in a grammar is a nested stack, not a list of
@@ -112,11 +113,16 @@ const same = (a, b) => a && b && a.slice(0, 7).toLowerCase() === b.slice(0, 7).t
  */
 function currentTheme() {
     const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
+    // Under tools/tm the running VS Code says where its own settings and extensions live:
+    // Insiders keeps them under "Code - Insiders" and ~/.vscode-insiders, not Code and
+    // ~/.vscode. Under a plain node, assume Stable.
+    const vscode = findVSCode();
+    const folder = vscode?.product.nameShort ?? "Code";
     const settings =
         {
-            darwin: path.join(home, "Library/Application Support/Code/User/settings.json"),
-            win32: path.join(process.env.APPDATA ?? "", "Code/User/settings.json"),
-        }[process.platform] ?? path.join(home, ".config/Code/User/settings.json");
+            darwin: path.join(home, "Library/Application Support", folder, "User/settings.json"),
+            win32: path.join(process.env.APPDATA ?? "", folder, "User/settings.json"),
+        }[process.platform] ?? path.join(home, ".config", folder, "User/settings.json");
 
     let label;
     try {
@@ -130,11 +136,13 @@ function currentTheme() {
     // file name -- "Aether Neptune" lives in aether-neptune.json, but "Default Dark+"
     // lives in dark_plus.json. The manifests are the only mapping there is.
     const roots = [
-        path.join(home, ".vscode/extensions"),
-        {
-            darwin: "/Applications/Visual Studio Code.app/Contents/Resources/app/extensions",
-            win32: path.join(process.env.LOCALAPPDATA ?? "", "Programs/Microsoft VS Code/resources/app/extensions"),
-        }[process.platform] ?? "/usr/share/code/resources/app/extensions",
+        path.join(home, vscode?.product.dataFolderName ?? ".vscode", "extensions"),
+        vscode ?
+            path.join(vscode.app, "extensions")
+        :   ({
+                darwin: "/Applications/Visual Studio Code.app/Contents/Resources/app/extensions",
+                win32: path.join(process.env.LOCALAPPDATA ?? "", "Programs/Microsoft VS Code/resources/app/extensions"),
+            }[process.platform] ?? "/usr/share/code/resources/app/extensions"),
     ];
 
     for (const root of roots) {
