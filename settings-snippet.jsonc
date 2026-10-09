@@ -6,143 +6,131 @@
 // follows, with no palette to maintain.
 
 {
-  // ---------------------------------------------------------------------------------
-  // REQUIRED. Without this the \def and style highlighting is computed and discarded.
-  //
-  // A theme opts into semantic highlighting with a "semanticHighlighting": true flag in
-  // its own JSON, and many omit or disable it. Setting this at the top level, with no
-  // "[Theme Name]" key, forces it on for every theme you use now or later.
-  // ---------------------------------------------------------------------------------
-  "editor.semanticTokenColorCustomizations": {
-    "enabled": true,
+    // ---------------------------------------------------------------------------------
+    // REQUIRED. Without this the \def and style highlighting is computed and discarded.
+    //
+    // A theme opts into semantic highlighting with a "semanticHighlighting": true flag in
+    // its own JSON, and many omit or disable it. Setting this at the top level, with no
+    // "[Theme Name]" key, forces it on for every theme you use now or later.
+    // ---------------------------------------------------------------------------------
+    "editor.semanticTokenColorCustomizations": {
+        "enabled": true,
 
-    // A theme-name key applies to that theme alone, and is how to rescue a token the
-    // theme leaves the colour of ordinary text. Monokai styles bare `variable` as
-    // #F8F8F2 -- its own editor foreground -- so a \def'ed macro is invisible as a
-    // macro; #FD971F is Monokai's parameter orange, which TikZ does not otherwise use.
-    // Ten of the 61 themes measured here need this. Run
-    //   ./tools/tm tools/theme-check.mjs
-    // to see which of your current theme's tokens read as plain text, then add a block
-    // like this one, keyed by the theme's name.
-    "[Monokai]": {
-      "enabled": true,
-      "rules": {
-        "tikzMacro": { "foreground": "#FD971F", "fontStyle": "" },
-        "tikzStyle": { "fontStyle": "" }
-      }
+        // A theme-name key applies to that theme alone, and is how to rescue a token the
+        // theme leaves the colour of ordinary text. Monokai styles bare `variable` as
+        // #F8F8F2 -- its own editor foreground -- so a \def'ed macro is invisible as a
+        // macro; #FD971F is Monokai's parameter orange, which TikZ does not otherwise use.
+        // Ten of the 61 themes measured here need this. Run
+        //   ./tools/tm tools/theme-check.mjs
+        // to see which of your current theme's tokens read as plain text, then add a block
+        // like this one, keyed by the theme's name.
+        "[Monokai]": {
+            "enabled": true,
+            "rules": {
+                "tikzMacro": { "foreground": "#FD971F", "fontStyle": "" },
+                "tikzStyle": { "fontStyle": "" },
+            },
+        },
+
+        // Font weight for the two semantic token types. These come from the provider, not
+        // the grammar, so textMateRules cannot reach them -- they have to be styled here.
+        // Only fontStyle is given, so each theme keeps its own colours, and "" is again
+        // what means plain.
+        "rules": {
+            "tikzMacro": { "fontStyle": "" },
+            "tikzStyle": { "fontStyle": "" },
+        },
     },
 
-    // Font weight for the two semantic token types. These come from the provider, not
-    // the grammar, so textMateRules cannot reach them -- they have to be styled here.
-    // Only fontStyle is given, so each theme keeps its own colours, and "" is again
-    // what means plain.
-    "rules": {
-      "tikzMacro": { "fontStyle": "" },
-      "tikzStyle": { "fontStyle": "" }
-    }
-  },
+    // ---------------------------------------------------------------------------------
+    // REQUIRED for the punctuation colours further down to be visible at all.
+    //
+    // editor.bracketPairColorization is on by default, and paints ( ) [ ] { } by nesting
+    // depth -- gold, orchid, blue -- overriding whatever a textMateRule says. It knows
+    // nothing about TikZ: a coordinate parenthesis, an option bracket and a value brace all
+    // come out the same three rotating colours, and the three rules at the end of this file
+    // are silently discarded. The ';' rule appears to work only because a semicolon is not
+    // a bracket -- and so does the '$' of a calc coordinate, which is why ($ can end up
+    // half gold and half blue.
+    //
+    // Emptying the list for LaTeX alone turns it off here and leaves rainbow brackets on in
+    // every other language.
+    // ---------------------------------------------------------------------------------
+    "[latex]": {
+        "editor.language.colorizedBracketPairs": [],
+    },
 
-  // ---------------------------------------------------------------------------------
-  // REQUIRED for the punctuation colours further down to be visible at all.
-  //
-  // editor.bracketPairColorization is on by default, and paints ( ) [ ] { } by nesting
-  // depth -- gold, orchid, blue -- overriding whatever a textMateRule says. It knows
-  // nothing about TikZ: a coordinate parenthesis, an option bracket and a value brace all
-  // come out the same three rotating colours, and the three rules at the end of this file
-  // are silently discarded. The ';' rule appears to work only because a semicolon is not
-  // a bracket -- and so does the '$' of a calc coordinate, which is why ($ can end up
-  // half gold and half blue.
-  //
-  // Emptying the list for LaTeX alone turns it off here and leaves rainbow brackets on in
-  // every other language.
-  // ---------------------------------------------------------------------------------
-  "[latex]": {
-    "editor.language.colorizedBracketPairs": []
-  },
+    // ---------------------------------------------------------------------------------
+    // OPTIONAL. Delete this whole block if you would rather stay purely theme-driven.
+    //
+    // The maths rules below are not optional if you dislike bold maths; the punctuation
+    // colours at the end are. Most themes leave punctuation at the default foreground, so
+    // the three kinds of delimiter end up correctly *scoped* but not visibly distinct.
+    // Those greys are the only literal colours in the project.
+    //
+    // Note the shape: textMateRules goes at the TOP LEVEL, which is what applies to every
+    // theme. A nested key is only read when it is a theme scope in square brackets, like
+    // "[Aether Neptune]". Anything else -- "*" included -- is silently ignored.
+    // ---------------------------------------------------------------------------------
+    "editor.tokenColorCustomizations": {
+        // Monokai's greys are olive: every background sits around hue 60 with 5-10%
+        // saturation, and the comment colour with them. `comments` is the shorthand for the
+        // comment scope; for the chrome, put the same treatment in
+        // "workbench.colorCustomizations": { "[Monokai]": { "editor.background": "#252525", … } }.
+        "[Monokai]": { "comments": "#7c7c7c" },
 
-  // ---------------------------------------------------------------------------------
-  // OPTIONAL. Delete this whole block if you would rather stay purely theme-driven.
-  //
-  // The maths rules below are not optional if you dislike bold maths; the punctuation
-  // colours at the end are. Most themes leave punctuation at the default foreground, so
-  // the three kinds of delimiter end up correctly *scoped* but not visibly distinct.
-  // Those greys are the only literal colours in the project.
-  //
-  // Note the shape: textMateRules goes at the TOP LEVEL, which is what applies to every
-  // theme. A nested key is only read when it is a theme scope in square brackets, like
-  // "[Aether Neptune]". Anything else -- "*" included -- is silently ignored.
-  // ---------------------------------------------------------------------------------
-  "editor.tokenColorCustomizations": {
-    // Monokai's greys are olive: every background sits around hue 60 with 5-10%
-    // saturation, and the comment colour with them. `comments` is the shorthand for the
-    // comment scope; for the chrome, put the same treatment in
-    // "workbench.colorCustomizations": { "[Monokai]": { "editor.background": "#252525", … } }.
-    "[Monokai]": { "comments": "#7c7c7c" },
+        "textMateRules": [
+            // -----------------------------------------------------------------------------
+            // Font weight. Only fontStyle is set, never a foreground, so the theme keeps its
+            // colours and these rules survive a theme change.
+            //
+            // An empty string is required to clear bold. Omitting the key means "inherit
+            // from the theme", which changes nothing -- "" is what means "plain".
+            // -----------------------------------------------------------------------------
+            // These two reach maths in ordinary prose. Maths *inside* a picture is scoped
+            // by the extension itself, as string.other.math.tikz, and needs no rule here.
+            {
+                "name": "LaTeX: maths delimiters \\( \\) and $ $ are not bold",
+                "scope": ["support.class.math.block.environment.latex", "support.class.math.block.tex"],
+                "settings": { "fontStyle": "" },
+            },
+            {
+                // Ancestor-qualified deliberately: support.function.general.tex is also \draw,
+                // \node and \tikzset out in the picture, and those stay bold.
+                "name": "LaTeX: control sequences inside maths are not bold",
+                "scope": "meta.math.block support.function.general.tex",
+                "settings": { "fontStyle": "" },
+            },
 
-    "textMateRules": [
-        // -----------------------------------------------------------------------------
-        // Font weight. Only fontStyle is set, never a foreground, so the theme keeps its
-        // colours and these rules survive a theme change.
-        //
-        // An empty string is required to clear bold. Omitting the key means "inherit
-        // from the theme", which changes nothing -- "" is what means "plain".
-        // -----------------------------------------------------------------------------
-        // These two reach maths in ordinary prose. Maths *inside* a picture is scoped
-        // by the extension itself, as string.other.math.tikz, and needs no rule here.
-        {
-          "name": "LaTeX: maths delimiters \\( \\) and $ $ are not bold",
-          "scope": [
-            "support.class.math.block.environment.latex",
-            "support.class.math.block.tex"
-          ],
-          "settings": { "fontStyle": "" }
-        },
-        {
-          // Ancestor-qualified deliberately: support.function.general.tex is also \draw,
-          // \node and \tikzset out in the picture, and those stay bold.
-          "name": "LaTeX: control sequences inside maths are not bold",
-          "scope": "meta.math.block support.function.general.tex",
-          "settings": { "fontStyle": "" }
-        },
-
-        {
-          "name": "TikZ: option brackets [ ]",
-          "scope": [
-            "punctuation.section.options.begin.tikz",
-            "punctuation.section.options.end.tikz"
-          ],
-          "settings": { "foreground": "#e0a458" }
-        },
-        {
-          "name": "TikZ: coordinate parentheses ( )",
-          "scope": [
-            "punctuation.section.coordinate.begin.tikz",
-            "punctuation.section.coordinate.end.tikz"
-          ],
-          "settings": { "foreground": "#7bb0d6" }
-        },
-        {
-          // The name inside the parentheses, one tint lighter than they are, so the two
-          // read as a single coordinate: muted chrome, brighter content. Monokai and many
-          // others style bare `variable` as the editor foreground, which leaves a
-          // coordinate name indistinguishable from ordinary prose.
-          "name": "TikZ: coordinate name",
-          "scope": "variable.other.coordinate.tikz",
-          "settings": { "foreground": "#A9CCE4" }
-        },
-        {
-          "name": "TikZ: value braces { }",
-          "scope": [
-            "punctuation.section.group.begin.tikz",
-            "punctuation.section.group.end.tikz"
-          ],
-          "settings": { "foreground": "#9a8fbe" }
-        },
-        {
-          "name": "TikZ: statement terminator ;",
-          "scope": "punctuation.terminator.tikz",
-          "settings": { "foreground": "#e05f5f", "fontStyle": "bold" }
-        }
-    ]
-  }
+            {
+                "name": "TikZ: option brackets [ ]",
+                "scope": ["punctuation.section.options.begin.tikz", "punctuation.section.options.end.tikz"],
+                "settings": { "foreground": "#e0a458" },
+            },
+            {
+                "name": "TikZ: coordinate parentheses ( )",
+                "scope": ["punctuation.section.coordinate.begin.tikz", "punctuation.section.coordinate.end.tikz"],
+                "settings": { "foreground": "#7bb0d6" },
+            },
+            {
+                // The name inside the parentheses, one tint lighter than they are, so the two
+                // read as a single coordinate: muted chrome, brighter content. Monokai and many
+                // others style bare `variable` as the editor foreground, which leaves a
+                // coordinate name indistinguishable from ordinary prose.
+                "name": "TikZ: coordinate name",
+                "scope": "variable.other.coordinate.tikz",
+                "settings": { "foreground": "#A9CCE4" },
+            },
+            {
+                "name": "TikZ: value braces { }",
+                "scope": ["punctuation.section.group.begin.tikz", "punctuation.section.group.end.tikz"],
+                "settings": { "foreground": "#9a8fbe" },
+            },
+            {
+                "name": "TikZ: statement terminator ;",
+                "scope": "punctuation.terminator.tikz",
+                "settings": { "foreground": "#e05f5f", "fontStyle": "bold" },
+            },
+        ],
+    },
 }

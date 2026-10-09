@@ -12,7 +12,7 @@ Here `->` is an operator, `ultra thick` a style reference, `shorten >` a key, `1
 
 ![The same two lines with the extension on: \eps amber where it is defined and where it is used, \draw still cyan, and the arrow tip, the option key, the style, the dimension, the path join and the coordinate each with a colour of their own.](images/highlighting.png)
 
-*The same two lines as the editor draws them: `\eps` is amber at its `\def` and again at its use, while `\draw` stays cyan.*
+_The same two lines as the editor draws them: `\eps` is amber at its `\def` and again at its use, while `\draw` stays cyan._
 
 ## Install
 
@@ -63,15 +63,15 @@ The scripts are looked for in each `tikz.scriptFolders` entry in turn and the fi
 
 ## Settings
 
-| Setting | Default | |
-|---|---|---|
-| `tikz.figureScript` | `./fig.sh` | script for a figure |
-| `tikz.buildScript` | `./build.sh` | script for the document |
-| `tikz.figureFolders` | `(?:[A-Za-z0-9_]+-figs\|tikz-figs\|tikz-code)` | folder names holding figures |
-| `tikz.scriptFolders` | `[".", "latex"]` | where the scripts and PDFs are, searched in order |
-| `tikz.figurePdf` | `build/fig.pdf` | PDF to view from a figure |
-| `tikz.documentPdf` | `build/main.pdf` | PDF to view otherwise |
-| `tikz.viewer` | `""` | viewer application; empty means the newest `/Applications/texstudio*.app` |
+| Setting              | Default                                        |                                                                           |
+| -------------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `tikz.figureScript`  | `./fig.sh`                                     | script for a figure                                                       |
+| `tikz.buildScript`   | `./build.sh`                                   | script for the document                                                   |
+| `tikz.figureFolders` | `(?:[A-Za-z0-9_]+-figs\|tikz-figs\|tikz-code)` | folder names holding figures                                              |
+| `tikz.scriptFolders` | `[".", "latex"]`                               | where the scripts and PDFs are, searched in order                         |
+| `tikz.figurePdf`     | `build/fig.pdf`                                | PDF to view from a figure                                                 |
+| `tikz.documentPdf`   | `build/main.pdf`                               | PDF to view otherwise                                                     |
+| `tikz.viewer`        | `""`                                           | viewer application; empty means the newest `/Applications/texstudio*.app` |
 
 ## Licence
 

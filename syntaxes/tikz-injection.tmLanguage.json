@@ -1,270 +1,269 @@
 {
-  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "scopeName": "tikz.injection",
-  "comment": "Injected into the stock LaTeX grammar wherever it has already established a tikzpicture, and -- the second clause of the selector -- everywhere in a .tikz file, which is a picture body with no tikzpicture around it. That clause excludes the tikzpicture scope only so a picture written out in full inside a fragment matches one clause rather than both. The negations matter: inside a tikzpicture, maths, comments and verbatim are ordinary LaTeX and must be left alone, and excluding them here is what keeps every rule below free of guards. The last one negates a scope of our own -- see #calc-coordinate, which needs the injection to stop re-entering a region this grammar has already claimed.",
-  "injectionSelector": "L:meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz, L:text.tex.latex.tikz-file -meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz",
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "scopeName": "tikz.injection",
+    "comment": "Injected into the stock LaTeX grammar wherever it has already established a tikzpicture, and -- the second clause of the selector -- everywhere in a .tikz file, which is a picture body with no tikzpicture around it. That clause excludes the tikzpicture scope only so a picture written out in full inside a fragment matches one clause rather than both. The negations matter: inside a tikzpicture, maths, comments and verbatim are ordinary LaTeX and must be left alone, and excluding them here is what keeps every rule below free of guards. The last one negates a scope of our own -- see #calc-coordinate, which needs the injection to stop re-entering a region this grammar has already claimed.",
+    "injectionSelector": "L:meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz, L:text.tex.latex.tikz-file -meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw -meta.coordinate.calc.tikz",
 
-  "patterns": [ { "include": "#picture-body" } ],
+    "patterns": [{ "include": "#picture-body" }],
 
-  "repository": {
-
-    "picture-body": {
-      "comment": "Path level: what a tikzpicture body looks like outside an option list. Shared with the toplevel grammar so an inline \\tikz...; one-liner is tokenised identically.",
-      "patterns": [
-        { "include": "#calc-coordinate" },
-        { "include": "#maths" },
-        { "include": "#spacing" },
-        { "include": "#option-list" },
-        { "include": "#path-operator" },
-        { "include": "#path-join" },
-        { "include": "#coordinate" },
-        { "include": "#terminator" },
-        { "include": "#separator" },
-        { "include": "#dimension" },
-        { "include": "#number" }
-      ]
-    },
-
-    "maths": {
-      "comment": "Maths is a different language embedded in the figure, and is scoped as one flat string so it reads as content rather than as more TikZ. The host grammar was doing this until now, and its scopes are the problem: a control sequence in maths is constant.other.general.math.tex, which nearly every theme colours from the same family as variable -- the family a \\def'ed macro already gets from the semantic provider. Two ambers, and no way to tell a macro from an \\varepsilon. A string scope is both distinct in every theme measured and what the host grammar half-says already, since it calls the delimiters punctuation.definition.string.\n\nThe cost is the internal structure of a formula: subscripts, digits and \\alpha are now one colour. In a figure a formula is a label a few characters long, and knowing where it begins and ends is worth more than colouring inside it.\n\nEvery rule bails out at \\end{...}, so an unclosed $ costs one label rather than the rest of the file.",
-      "patterns": [
-        {
-          "begin": "(\\\\\\()",
-          "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
-          "end": "(\\\\\\))|(?=\\\\end\\{)",
-          "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
-          "name": "string.other.math.tikz"
+    "repository": {
+        "picture-body": {
+            "comment": "Path level: what a tikzpicture body looks like outside an option list. Shared with the toplevel grammar so an inline \\tikz...; one-liner is tokenised identically.",
+            "patterns": [
+                { "include": "#calc-coordinate" },
+                { "include": "#maths" },
+                { "include": "#spacing" },
+                { "include": "#option-list" },
+                { "include": "#path-operator" },
+                { "include": "#path-join" },
+                { "include": "#coordinate" },
+                { "include": "#terminator" },
+                { "include": "#separator" },
+                { "include": "#dimension" },
+                { "include": "#number" }
+            ]
         },
-        {
-          "begin": "(\\\\\\[)",
-          "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
-          "end": "(\\\\\\])|(?=\\\\end\\{)",
-          "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
-          "name": "string.other.math.tikz"
+
+        "maths": {
+            "comment": "Maths is a different language embedded in the figure, and is scoped as one flat string so it reads as content rather than as more TikZ. The host grammar was doing this until now, and its scopes are the problem: a control sequence in maths is constant.other.general.math.tex, which nearly every theme colours from the same family as variable -- the family a \\def'ed macro already gets from the semantic provider. Two ambers, and no way to tell a macro from an \\varepsilon. A string scope is both distinct in every theme measured and what the host grammar half-says already, since it calls the delimiters punctuation.definition.string.\n\nThe cost is the internal structure of a formula: subscripts, digits and \\alpha are now one colour. In a figure a formula is a label a few characters long, and knowing where it begins and ends is worth more than colouring inside it.\n\nEvery rule bails out at \\end{...}, so an unclosed $ costs one label rather than the rest of the file.",
+            "patterns": [
+                {
+                    "begin": "(\\\\\\()",
+                    "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
+                    "end": "(\\\\\\))|(?=\\\\end\\{)",
+                    "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
+                    "name": "string.other.math.tikz"
+                },
+                {
+                    "begin": "(\\\\\\[)",
+                    "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
+                    "end": "(\\\\\\])|(?=\\\\end\\{)",
+                    "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
+                    "name": "string.other.math.tikz"
+                },
+                {
+                    "begin": "(?<!\\\\)(\\$\\$)",
+                    "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
+                    "end": "(\\$\\$)|(?=\\\\end\\{)",
+                    "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
+                    "name": "string.other.math.tikz"
+                },
+                {
+                    "begin": "(?<!\\\\)(\\$)",
+                    "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
+                    "end": "(?<!\\\\)(\\$)|(?=\\\\end\\{)",
+                    "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
+                    "name": "string.other.math.tikz"
+                }
+            ]
         },
-        {
-          "begin": "(?<!\\\\)(\\$\\$)",
-          "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
-          "end": "(\\$\\$)|(?=\\\\end\\{)",
-          "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
-          "name": "string.other.math.tikz"
+
+        "spacing": {
+            "comment": "TeX spacing macros, scoped as maths is. \\qquad between two \\(...\\) groups is not in maths -- it sits in text mode between them -- so the host grammar gives it support.function.general.tex, the same scope \\node and \\draw carry, and it comes out the colour of a path command in the middle of a label.\n\nSpacing in a label is content, not structure, so it takes the maths scope and merges with the formulas either side of it. The exact name string.other.math.tikz is deliberate rather than a spacing scope of its own: the point is to be indistinguishable from the maths it separates, and a distinct name is something a theme could colour differently.\n\nA closed vocabulary is safe here in a way it would not be for #key: none of these is ever a TikZ path construct, and TeX is not going to grow more of them.",
+            "match": "(?<!\\\\)\\\\(?:qquad|quad|enspace|thinspace|medspace|thickspace|neg(?:thin|med|thick)space|hfill|vfill|hspace\\*?|vspace\\*?|smallskip|medskip|bigskip)(?![A-Za-z@])|(?<!\\\\)\\\\[,;:!]",
+            "name": "string.other.math.tikz"
         },
-        {
-          "begin": "(?<!\\\\)(\\$)",
-          "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tikz" } },
-          "end": "(?<!\\\\)(\\$)|(?=\\\\end\\{)",
-          "endCaptures": { "1": { "name": "punctuation.definition.string.end.tikz" } },
-          "name": "string.other.math.tikz"
+
+        "comment": {
+            "comment": "Opening a block below takes tokenisation of its interior away from the host, so comments inside an option list are ours to handle.",
+            "match": "(%).*$",
+            "name": "comment.line.percentage.tikz",
+            "captures": { "1": { "name": "punctuation.definition.comment.tikz" } }
+        },
+
+        "option-list": {
+            "comment": "A bracketed option list. Bailing out at \\end{...} keeps an unbalanced bracket from swallowing the rest of the picture.",
+            "begin": "(?<!\\\\)(\\[)",
+            "beginCaptures": { "1": { "name": "punctuation.section.options.begin.tikz" } },
+            "end": "(\\])|(?=\\\\end\\{)",
+            "endCaptures": { "1": { "name": "punctuation.section.options.end.tikz" } },
+            "patterns": [{ "include": "#option-body" }]
+        },
+
+        "option-body": {
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#calc-coordinate" },
+                { "include": "#maths" },
+                { "include": "#style-handle" },
+                { "include": "#key" },
+                { "include": "#arrow" },
+                { "include": "#dimension" },
+                { "include": "#colour-mix-operator" },
+                { "include": "#colour-after-mix" },
+                { "include": "#colour-before-mix" },
+                { "include": "#number" },
+                { "include": "#spacing" },
+                { "include": "#macro" },
+                { "include": "#value-group" },
+                { "include": "#option-list" },
+                { "include": "#separator" },
+                { "include": "#bare-option" }
+            ]
+        },
+
+        "value-group": {
+            "comment": "A braced value: a nested key list (every node/.style={...}), or node text, or maths. Recursing into the option body handles the first and is harmless for the rest.",
+            "begin": "(\\{)",
+            "beginCaptures": { "1": { "name": "punctuation.section.group.begin.tikz" } },
+            "end": "(\\})",
+            "endCaptures": { "1": { "name": "punctuation.section.group.end.tikz" } },
+            "patterns": [{ "include": "#option-body" }]
+        },
+
+        "style-handle": {
+            "comment": "name/.style = {...} and friends. Matched before #key so the handle does not read as an ordinary key.",
+            "match": "([A-Za-z@][A-Za-z0-9 _@.+-]*?)\\s*(/\\.)(style\\s+\\d+\\s+args|style\\s+n\\s+args|append\\s+style|prefix\\s+style|style|code\\s+\\d+\\s+args|code|default|initial|value\\s+required|value\\s+forbidden|estore\\s+in|store\\s+in|is\\s+choice|list|add|forward\\s+to|search\\s+also)\\b",
+            "captures": {
+                "1": { "name": "entity.name.function.style.tikz entity.name.function.tikz" },
+                "2": { "name": "punctuation.definition.handler.tikz" },
+                "3": { "name": "keyword.other.handler.tikz" }
+            }
+        },
+
+        "key": {
+            "comment": "Any word phrase followed by '='. Deliberately generic: this covers every built-in key (dash pattern, line width, minimum size, inner sep) and every custom one, with no vocabulary to maintain. The trailing [<>] catches 'shorten >='. A comma cannot appear in the class, so a key can never span two option items.",
+            "match": "([A-Za-z@][A-Za-z0-9 _@./+-]*?(?:\\s*[<>])?)\\s*(=)",
+            "captures": {
+                "1": { "name": "entity.other.attribute-name.tikz variable.other.property.tikz" },
+                "2": { "name": "keyword.operator.assignment.tikz" }
+            }
+        },
+
+        "arrow": {
+            "comment": "Arrow tip specifications. Only reachable inside an option list, which is what separates '-|' the tip from '-|' the path join.",
+            "patterns": [
+                {
+                    "match": "(?<![\\w!])(<->|<-\\||\\|->|\\|-\\||->>|<<-|>->|<-<|-\\||\\|-|->|<-|-o|o-|-\\*|\\*-)(?![\\w=])",
+                    "name": "keyword.operator.arrow.tikz"
+                },
+                {
+                    "match": "(?<![\\w!-])(-)?(latex|stealth|to|Latex|Stealth|Triangle|Circle|Square|Diamond|Bar|Rays|Hooks|Parenthesis|Straight Barb|Arc Barb|Hooked)(-)?(?![\\w])",
+                    "name": "keyword.operator.arrow.tikz"
+                }
+            ]
+        },
+
+        "path-join": {
+            "comment": "Path joins live outside option lists, between coordinates.",
+            "match": "(--|\\.\\.controls|\\|-|-\\|)",
+            "name": "keyword.operator.path.tikz"
+        },
+
+        "path-operator": {
+            "patterns": [
+                {
+                    "match": "(?<![\\\\\\w])(rectangle|circle|ellipse|arc|grid|parabola|cycle|coordinate|node|child|edge|foreach|graph|chain|decorate|plot|to|pic|svg|let|in)(?![\\w])",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "'at' and 'and' are ordinary English, and node text is not excluded from this injection, so they are only claimed when a coordinate follows -- which is the only way TikZ ever uses them.",
+                    "match": "(?<![\\\\\\w])(at|and)(?![\\w])(?=\\s*\\()",
+                    "name": "keyword.control.path.tikz"
+                }
+            ]
+        },
+
+        "calc-coordinate": {
+            "comment": "($(a)+(1mm,0)$) is the calc library's coordinate arithmetic, not maths. The dollars are calc's own delimiters -- TikZ requires them and there is no formula between them -- so #maths was flattening a whole coordinate expression into one string, and a figure full of ($...$) offsets read as a figure full of labels.\n\nListed before #maths and #coordinate in both bodies, because TextMate takes the earliest match: #coordinate would claim the opening parenthesis and leave the dollar to #maths, which is exactly the bug. Matching '(' and '$' together is also what keeps this off ordinary maths -- a bare $x$ has no parenthesis in front of it and is left to #maths as before.\n\nThe dollars take the coordinate parenthesis scopes rather than one of their own, so '($' and '$)' each read as a single delimiter in the theme the parentheses already use, and no new rule is needed in settings-snippet.jsonc.\n\ncontentName is load-bearing, not decoration. An L: injection re-applies wherever its selector still matches, and the scope stack inside this block is still a tikzpicture -- so #maths was being injected back in on top of our own patterns, matching the closing '$' before the end pattern could and running the rest of the line into a string. Naming the region and negating that name in the injectionSelector is what keeps the interior ours, the same trick #maths already relies on with -string.",
+            "begin": "(?<!\\\\)(\\()\\s*(\\$)",
+            "beginCaptures": {
+                "1": { "name": "punctuation.section.coordinate.begin.tikz" },
+                "2": { "name": "punctuation.section.coordinate.begin.tikz" }
+            },
+            "end": "(\\$)\\s*(\\))|(?=\\\\end\\{)",
+            "endCaptures": {
+                "1": { "name": "punctuation.section.coordinate.end.tikz" },
+                "2": { "name": "punctuation.section.coordinate.end.tikz" }
+            },
+            "contentName": "meta.coordinate.calc.tikz",
+            "patterns": [{ "include": "#calc-body" }]
+        },
+
+        "calc-body": {
+            "comment": "What may appear between calc's dollars: coordinates, lengths, plain numbers and the operators joining them. #calc-coordinate comes first so a nested ($...$) is reopened rather than read as a coordinate; #dimension and #number come before #calc-operator so the sign in (-1mm,-1.5mm) stays with its number instead of being taken for subtraction.",
+            "patterns": [
+                { "include": "#calc-coordinate" },
+                { "include": "#coordinate" },
+                { "include": "#dimension" },
+                { "include": "#number" },
+                { "include": "#calc-operator" },
+                { "include": "#separator" },
+                { "include": "#macro" }
+            ]
+        },
+
+        "calc-operator": {
+            "comment": "Addition and subtraction of coordinates, scalar '*' and '/', and the partway modifier '!' with the ':' that introduces its angle, as in ($(a)!.5!90:(b)$).",
+            "match": "[-+*/!:]",
+            "name": "keyword.operator.calc.tikz"
+        },
+
+        "coordinate": {
+            "comment": "Parentheses are marked as punctuation without claiming their interior, so node text and maths inside them keep their host tokenisation. A named coordinate is picked out separately.",
+            "patterns": [
+                {
+                    "match": "(?<=\\()\\s*([A-Za-z@][A-Za-z0-9 @._-]*?)\\s*(?=\\))",
+                    "captures": { "1": { "name": "variable.other.coordinate.tikz" } }
+                },
+                { "match": "(?<!\\\\)\\(", "name": "punctuation.section.coordinate.begin.tikz" },
+                { "match": "(?<!\\\\)\\)", "name": "punctuation.section.coordinate.end.tikz" }
+            ]
+        },
+
+        "_why-no-path-level-braces": {
+            "comment": "There is deliberately no rule marking { } at path level. An injection selected with L: outruns the host's own end patterns, so a bare '}' rule steals the closing brace of constructs like \\textbf{...} and leaves them open for the rest of the file. Braces are only marked inside an option list, where #value-group opens and closes them as a matched pair and the region is genuinely ours. At path level a brace introduces node text, which is LaTeX and rightly keeps its LaTeX colours.",
+            "match": "(?!)"
+        },
+
+        "terminator": {
+            "match": ";",
+            "name": "punctuation.terminator.tikz"
+        },
+
+        "separator": {
+            "match": ",",
+            "name": "punctuation.separator.tikz"
+        },
+
+        "dimension": {
+            "comment": "Matched before #number so the unit is never orphaned. TeX's full unit set, plus the pgf-specific ones.",
+            "match": "(?<![\\w.])(-?(?:\\d+\\.?\\d*|\\.\\d+))\\s*(pt|mm|cm|in|ex|em|bp|dd|pc|sp|cc|nd|nc|mu)(?![\\w])",
+            "name": "constant.numeric.dimension.tikz",
+            "captures": { "2": { "name": "keyword.other.unit.tikz" } }
+        },
+
+        "number": {
+            "match": "(?<![\\w.])-?(?:\\d+\\.?\\d*|\\.\\d+)(?![\\w])",
+            "name": "constant.numeric.tikz"
+        },
+
+        "colour-mix-operator": {
+            "match": "!",
+            "name": "keyword.operator.mix.tikz"
+        },
+
+        "colour-before-mix": {
+            "match": "\\b([A-Za-z][A-Za-z0-9]*)(?=\\s*!)",
+            "name": "support.constant.color.tikz constant.language.tikz variable.other.constant.tikz"
+        },
+
+        "colour-after-mix": {
+            "match": "(?<=!)\\s*([A-Za-z][A-Za-z0-9]*)",
+            "name": "support.constant.color.tikz constant.language.tikz variable.other.constant.tikz"
+        },
+
+        "macro": {
+            "comment": "A control sequence used as a value. The semantic token provider recolours the ones it can prove are \\def'ed in this file; this is the fallback for the rest.",
+            "match": "(\\\\)([A-Za-z@]+)",
+            "name": "support.function.general.tex",
+            "captures": { "1": { "name": "punctuation.definition.function.tex" } }
+        },
+
+        "bare-option": {
+            "comment": "A valueless option or a style reference: 'thick', 'dashed', 'school axis', 'coloraqua'. Last resort, so anything with more structure has already been claimed. Every word must begin with a letter: TextMate takes the earliest match, not the first listed rule, so allowing a digit-led continuation let this swallow the numbers in 'dash pattern=on 1.6pt off 1.3pt' before #dimension could reach them.",
+            "match": "[A-Za-z@][A-Za-z0-9_@.-]*(?:[ ]+[A-Za-z@][A-Za-z0-9_@.-]*)*",
+            "name": "support.function.tikz entity.name.function.tikz"
         }
-      ]
-    },
-
-    "spacing": {
-      "comment": "TeX spacing macros, scoped as maths is. \\qquad between two \\(...\\) groups is not in maths -- it sits in text mode between them -- so the host grammar gives it support.function.general.tex, the same scope \\node and \\draw carry, and it comes out the colour of a path command in the middle of a label.\n\nSpacing in a label is content, not structure, so it takes the maths scope and merges with the formulas either side of it. The exact name string.other.math.tikz is deliberate rather than a spacing scope of its own: the point is to be indistinguishable from the maths it separates, and a distinct name is something a theme could colour differently.\n\nA closed vocabulary is safe here in a way it would not be for #key: none of these is ever a TikZ path construct, and TeX is not going to grow more of them.",
-      "match": "(?<!\\\\)\\\\(?:qquad|quad|enspace|thinspace|medspace|thickspace|neg(?:thin|med|thick)space|hfill|vfill|hspace\\*?|vspace\\*?|smallskip|medskip|bigskip)(?![A-Za-z@])|(?<!\\\\)\\\\[,;:!]",
-      "name": "string.other.math.tikz"
-    },
-
-    "comment": {
-      "comment": "Opening a block below takes tokenisation of its interior away from the host, so comments inside an option list are ours to handle.",
-      "match": "(%).*$",
-      "name": "comment.line.percentage.tikz",
-      "captures": { "1": { "name": "punctuation.definition.comment.tikz" } }
-    },
-
-    "option-list": {
-      "comment": "A bracketed option list. Bailing out at \\end{...} keeps an unbalanced bracket from swallowing the rest of the picture.",
-      "begin": "(?<!\\\\)(\\[)",
-      "beginCaptures": { "1": { "name": "punctuation.section.options.begin.tikz" } },
-      "end": "(\\])|(?=\\\\end\\{)",
-      "endCaptures": { "1": { "name": "punctuation.section.options.end.tikz" } },
-      "patterns": [ { "include": "#option-body" } ]
-    },
-
-    "option-body": {
-      "patterns": [
-        { "include": "#comment" },
-        { "include": "#calc-coordinate" },
-        { "include": "#maths" },
-        { "include": "#style-handle" },
-        { "include": "#key" },
-        { "include": "#arrow" },
-        { "include": "#dimension" },
-        { "include": "#colour-mix-operator" },
-        { "include": "#colour-after-mix" },
-        { "include": "#colour-before-mix" },
-        { "include": "#number" },
-        { "include": "#spacing" },
-        { "include": "#macro" },
-        { "include": "#value-group" },
-        { "include": "#option-list" },
-        { "include": "#separator" },
-        { "include": "#bare-option" }
-      ]
-    },
-
-    "value-group": {
-      "comment": "A braced value: a nested key list (every node/.style={...}), or node text, or maths. Recursing into the option body handles the first and is harmless for the rest.",
-      "begin": "(\\{)",
-      "beginCaptures": { "1": { "name": "punctuation.section.group.begin.tikz" } },
-      "end": "(\\})",
-      "endCaptures": { "1": { "name": "punctuation.section.group.end.tikz" } },
-      "patterns": [ { "include": "#option-body" } ]
-    },
-
-    "style-handle": {
-      "comment": "name/.style = {...} and friends. Matched before #key so the handle does not read as an ordinary key.",
-      "match": "([A-Za-z@][A-Za-z0-9 _@.+-]*?)\\s*(/\\.)(style\\s+\\d+\\s+args|style\\s+n\\s+args|append\\s+style|prefix\\s+style|style|code\\s+\\d+\\s+args|code|default|initial|value\\s+required|value\\s+forbidden|estore\\s+in|store\\s+in|is\\s+choice|list|add|forward\\s+to|search\\s+also)\\b",
-      "captures": {
-        "1": { "name": "entity.name.function.style.tikz entity.name.function.tikz" },
-        "2": { "name": "punctuation.definition.handler.tikz" },
-        "3": { "name": "keyword.other.handler.tikz" }
-      }
-    },
-
-    "key": {
-      "comment": "Any word phrase followed by '='. Deliberately generic: this covers every built-in key (dash pattern, line width, minimum size, inner sep) and every custom one, with no vocabulary to maintain. The trailing [<>] catches 'shorten >='. A comma cannot appear in the class, so a key can never span two option items.",
-      "match": "([A-Za-z@][A-Za-z0-9 _@./+-]*?(?:\\s*[<>])?)\\s*(=)",
-      "captures": {
-        "1": { "name": "entity.other.attribute-name.tikz variable.other.property.tikz" },
-        "2": { "name": "keyword.operator.assignment.tikz" }
-      }
-    },
-
-    "arrow": {
-      "comment": "Arrow tip specifications. Only reachable inside an option list, which is what separates '-|' the tip from '-|' the path join.",
-      "patterns": [
-        {
-          "match": "(?<![\\w!])(<->|<-\\||\\|->|\\|-\\||->>|<<-|>->|<-<|-\\||\\|-|->|<-|-o|o-|-\\*|\\*-)(?![\\w=])",
-          "name": "keyword.operator.arrow.tikz"
-        },
-        {
-          "match": "(?<![\\w!-])(-)?(latex|stealth|to|Latex|Stealth|Triangle|Circle|Square|Diamond|Bar|Rays|Hooks|Parenthesis|Straight Barb|Arc Barb|Hooked)(-)?(?![\\w])",
-          "name": "keyword.operator.arrow.tikz"
-        }
-      ]
-    },
-
-    "path-join": {
-      "comment": "Path joins live outside option lists, between coordinates.",
-      "match": "(--|\\.\\.controls|\\|-|-\\|)",
-      "name": "keyword.operator.path.tikz"
-    },
-
-    "path-operator": {
-      "patterns": [
-        {
-          "match": "(?<![\\\\\\w])(rectangle|circle|ellipse|arc|grid|parabola|cycle|coordinate|node|child|edge|foreach|graph|chain|decorate|plot|to|pic|svg|let|in)(?![\\w])",
-          "name": "keyword.control.path.tikz"
-        },
-        {
-          "comment": "'at' and 'and' are ordinary English, and node text is not excluded from this injection, so they are only claimed when a coordinate follows -- which is the only way TikZ ever uses them.",
-          "match": "(?<![\\\\\\w])(at|and)(?![\\w])(?=\\s*\\()",
-          "name": "keyword.control.path.tikz"
-        }
-      ]
-    },
-
-    "calc-coordinate": {
-      "comment": "($(a)+(1mm,0)$) is the calc library's coordinate arithmetic, not maths. The dollars are calc's own delimiters -- TikZ requires them and there is no formula between them -- so #maths was flattening a whole coordinate expression into one string, and a figure full of ($...$) offsets read as a figure full of labels.\n\nListed before #maths and #coordinate in both bodies, because TextMate takes the earliest match: #coordinate would claim the opening parenthesis and leave the dollar to #maths, which is exactly the bug. Matching '(' and '$' together is also what keeps this off ordinary maths -- a bare $x$ has no parenthesis in front of it and is left to #maths as before.\n\nThe dollars take the coordinate parenthesis scopes rather than one of their own, so '($' and '$)' each read as a single delimiter in the theme the parentheses already use, and no new rule is needed in settings-snippet.jsonc.\n\ncontentName is load-bearing, not decoration. An L: injection re-applies wherever its selector still matches, and the scope stack inside this block is still a tikzpicture -- so #maths was being injected back in on top of our own patterns, matching the closing '$' before the end pattern could and running the rest of the line into a string. Naming the region and negating that name in the injectionSelector is what keeps the interior ours, the same trick #maths already relies on with -string.",
-      "begin": "(?<!\\\\)(\\()\\s*(\\$)",
-      "beginCaptures": {
-        "1": { "name": "punctuation.section.coordinate.begin.tikz" },
-        "2": { "name": "punctuation.section.coordinate.begin.tikz" }
-      },
-      "end": "(\\$)\\s*(\\))|(?=\\\\end\\{)",
-      "endCaptures": {
-        "1": { "name": "punctuation.section.coordinate.end.tikz" },
-        "2": { "name": "punctuation.section.coordinate.end.tikz" }
-      },
-      "contentName": "meta.coordinate.calc.tikz",
-      "patterns": [ { "include": "#calc-body" } ]
-    },
-
-    "calc-body": {
-      "comment": "What may appear between calc's dollars: coordinates, lengths, plain numbers and the operators joining them. #calc-coordinate comes first so a nested ($...$) is reopened rather than read as a coordinate; #dimension and #number come before #calc-operator so the sign in (-1mm,-1.5mm) stays with its number instead of being taken for subtraction.",
-      "patterns": [
-        { "include": "#calc-coordinate" },
-        { "include": "#coordinate" },
-        { "include": "#dimension" },
-        { "include": "#number" },
-        { "include": "#calc-operator" },
-        { "include": "#separator" },
-        { "include": "#macro" }
-      ]
-    },
-
-    "calc-operator": {
-      "comment": "Addition and subtraction of coordinates, scalar '*' and '/', and the partway modifier '!' with the ':' that introduces its angle, as in ($(a)!.5!90:(b)$).",
-      "match": "[-+*/!:]",
-      "name": "keyword.operator.calc.tikz"
-    },
-
-    "coordinate": {
-      "comment": "Parentheses are marked as punctuation without claiming their interior, so node text and maths inside them keep their host tokenisation. A named coordinate is picked out separately.",
-      "patterns": [
-        {
-          "match": "(?<=\\()\\s*([A-Za-z@][A-Za-z0-9 @._-]*?)\\s*(?=\\))",
-          "captures": { "1": { "name": "variable.other.coordinate.tikz" } }
-        },
-        { "match": "(?<!\\\\)\\(", "name": "punctuation.section.coordinate.begin.tikz" },
-        { "match": "(?<!\\\\)\\)", "name": "punctuation.section.coordinate.end.tikz" }
-      ]
-    },
-
-    "_why-no-path-level-braces": {
-      "comment": "There is deliberately no rule marking { } at path level. An injection selected with L: outruns the host's own end patterns, so a bare '}' rule steals the closing brace of constructs like \\textbf{...} and leaves them open for the rest of the file. Braces are only marked inside an option list, where #value-group opens and closes them as a matched pair and the region is genuinely ours. At path level a brace introduces node text, which is LaTeX and rightly keeps its LaTeX colours.",
-      "match": "(?!)"
-    },
-
-    "terminator": {
-      "match": ";",
-      "name": "punctuation.terminator.tikz"
-    },
-
-    "separator": {
-      "match": ",",
-      "name": "punctuation.separator.tikz"
-    },
-
-    "dimension": {
-      "comment": "Matched before #number so the unit is never orphaned. TeX's full unit set, plus the pgf-specific ones.",
-      "match": "(?<![\\w.])(-?(?:\\d+\\.?\\d*|\\.\\d+))\\s*(pt|mm|cm|in|ex|em|bp|dd|pc|sp|cc|nd|nc|mu)(?![\\w])",
-      "name": "constant.numeric.dimension.tikz",
-      "captures": { "2": { "name": "keyword.other.unit.tikz" } }
-    },
-
-    "number": {
-      "match": "(?<![\\w.])-?(?:\\d+\\.?\\d*|\\.\\d+)(?![\\w])",
-      "name": "constant.numeric.tikz"
-    },
-
-    "colour-mix-operator": {
-      "match": "!",
-      "name": "keyword.operator.mix.tikz"
-    },
-
-    "colour-before-mix": {
-      "match": "\\b([A-Za-z][A-Za-z0-9]*)(?=\\s*!)",
-      "name": "support.constant.color.tikz constant.language.tikz variable.other.constant.tikz"
-    },
-
-    "colour-after-mix": {
-      "match": "(?<=!)\\s*([A-Za-z][A-Za-z0-9]*)",
-      "name": "support.constant.color.tikz constant.language.tikz variable.other.constant.tikz"
-    },
-
-    "macro": {
-      "comment": "A control sequence used as a value. The semantic token provider recolours the ones it can prove are \\def'ed in this file; this is the fallback for the rest.",
-      "match": "(\\\\)([A-Za-z@]+)",
-      "name": "support.function.general.tex",
-      "captures": { "1": { "name": "punctuation.definition.function.tex" } }
-    },
-
-    "bare-option": {
-      "comment": "A valueless option or a style reference: 'thick', 'dashed', 'school axis', 'coloraqua'. Last resort, so anything with more structure has already been claimed. Every word must begin with a letter: TextMate takes the earliest match, not the first listed rule, so allowing a digit-led continuation let this swallow the numbers in 'dash pattern=on 1.6pt off 1.3pt' before #dimension could reach them.",
-      "match": "[A-Za-z@][A-Za-z0-9_@.-]*(?:[ ]+[A-Za-z@][A-Za-z0-9_@.-]*)*",
-      "name": "support.function.tikz entity.name.function.tikz"
     }
-  }
 }

@@ -1,39 +1,35 @@
 {
-  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "scopeName": "tikz.toplevel",
-  "comment": "TikZ that lives outside a tikzpicture: preamble style definitions and inline one-liners. Every rule here must *begin* at an explicit TikZ command, because this grammar is injected into LaTeX at large and must leave ordinary prose completely alone.",
-  "injectionSelector": "L:text.tex.latex -meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw",
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "scopeName": "tikz.toplevel",
+    "comment": "TikZ that lives outside a tikzpicture: preamble style definitions and inline one-liners. Every rule here must *begin* at an explicit TikZ command, because this grammar is injected into LaTeX at large and must leave ordinary prose completely alone.",
+    "injectionSelector": "L:text.tex.latex -meta.function.environment.latex.tikz -meta.math -comment -string -markup.raw",
 
-  "patterns": [
-    { "include": "#keyset-command" },
-    { "include": "#inline-tikz" }
-  ],
+    "patterns": [{ "include": "#keyset-command" }, { "include": "#inline-tikz" }],
 
-  "repository": {
+    "repository": {
+        "keyset-command": {
+            "comment": "\\tikzset{...} and friends. The closing brace is found by balance: #value-group inside the option body consumes every nested {...}, so the first unconsumed '}' is the matching one.",
+            "begin": "((\\\\)(?:tikzset|pgfplotsset|pgfkeys|pgfqkeys|tikzstyle|pgfplotscreateplotcyclelist)(?![A-Za-z@]))\\s*(\\{)",
+            "beginCaptures": {
+                "1": { "name": "support.function.general.tex" },
+                "2": { "name": "punctuation.definition.function.tex" },
+                "3": { "name": "punctuation.section.options.begin.tikz" }
+            },
+            "end": "(\\})|(?=^\\s*\\\\(?:documentclass|usepackage|begin\\{document\\}))",
+            "endCaptures": { "1": { "name": "punctuation.section.options.end.tikz" } },
+            "patterns": [{ "include": "tikz.injection#option-body" }]
+        },
 
-    "keyset-command": {
-      "comment": "\\tikzset{...} and friends. The closing brace is found by balance: #value-group inside the option body consumes every nested {...}, so the first unconsumed '}' is the matching one.",
-      "begin": "((\\\\)(?:tikzset|pgfplotsset|pgfkeys|pgfqkeys|tikzstyle|pgfplotscreateplotcyclelist)(?![A-Za-z@]))\\s*(\\{)",
-      "beginCaptures": {
-        "1": { "name": "support.function.general.tex" },
-        "2": { "name": "punctuation.definition.function.tex" },
-        "3": { "name": "punctuation.section.options.begin.tikz" }
-      },
-      "end": "(\\})|(?=^\\s*\\\\(?:documentclass|usepackage|begin\\{document\\}))",
-      "endCaptures": { "1": { "name": "punctuation.section.options.end.tikz" } },
-      "patterns": [ { "include": "tikz.injection#option-body" } ]
-    },
-
-    "inline-tikz": {
-      "comment": "\\tikz\\draw ... ; one-liners. Terminated by the semicolon, or abandoned at a blank line so a missing ';' cannot run away.",
-      "begin": "((\\\\)tikz(?![A-Za-z@]))",
-      "beginCaptures": {
-        "1": { "name": "support.function.general.tex" },
-        "2": { "name": "punctuation.definition.function.tex" }
-      },
-      "end": "(;)|^\\s*$",
-      "endCaptures": { "1": { "name": "punctuation.terminator.tikz" } },
-      "patterns": [ { "include": "tikz.injection#picture-body" } ]
+        "inline-tikz": {
+            "comment": "\\tikz\\draw ... ; one-liners. Terminated by the semicolon, or abandoned at a blank line so a missing ';' cannot run away.",
+            "begin": "((\\\\)tikz(?![A-Za-z@]))",
+            "beginCaptures": {
+                "1": { "name": "support.function.general.tex" },
+                "2": { "name": "punctuation.definition.function.tex" }
+            },
+            "end": "(;)|^\\s*$",
+            "endCaptures": { "1": { "name": "punctuation.terminator.tikz" } },
+            "patterns": [{ "include": "tikz.injection#picture-body" }]
+        }
     }
-  }
 }

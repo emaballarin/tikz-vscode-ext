@@ -18,7 +18,7 @@ Completion is the smaller, earlier version of the same idea: the same vocabulary
 
 Alan Cain's TikZ Reference Card (v0.4.2, 2016) is the thing this should automate. It stays in use because it is visual, and that is the flavour the panel should have.
 
-Look at what it actually does. Line widths are not listed, they are *drawn* — `ultra thin` through `ultra thick` each shown as a line of that width. Dash patterns are drawn. Opacity is a ramp of grey circles. Plot marks are drawn. Transformations are little sheared boxes. Miter and bevel joins are drawn as black shapes. Nothing there asks you to imagine the result.
+Look at what it actually does. Line widths are not listed, they are _drawn_ — `ultra thin` through `ultra thick` each shown as a line of that width. Dash patterns are drawn. Opacity is a ramp of grey circles. Plot marks are drawn. Transformations are little sheared boxes. Miter and bevel joins are drawn as black shapes. Nothing there asks you to imagine the result.
 
 Two panels are the whole argument. The node anchor diagram puts every anchor at its real position on a labelled box, so you pick `mid east` by pointing at where it is. The `pos=` scale draws a line with `at start`, `near start`, `midway`, `near end`, `at end` marked against 0 to 1. Neither requires remembering a name.
 
@@ -42,9 +42,9 @@ If something turns out to be missing from the cwl, add it by hand on top. A smal
 
 Two syntaxes, for two different kinds of arithmetic, and remembering which is which is exactly the tedium the interface should absorb.
 
-`($(bbus)+(0,1.5mm)$)` is the calc library: arithmetic on *points*. Adding one coordinate to another, the partway `!` operator, projections. The dollars are what mark the parenthesised thing as an expression over coordinates rather than as a coordinate.
+`($(bbus)+(0,1.5mm)$)` is the calc library: arithmetic on _points_. Adding one coordinate to another, the partway `!` operator, projections. The dollars are what mark the parenthesised thing as an expression over coordinates rather than as a coordinate.
 
-`({(\xLoss+\xR)/2},{-\dy/2})` is not calc at all. It is an ordinary `(x,y)` whose *components* are pgfmath expressions. The braces are there because a component holding a comma or a parenthesis would otherwise confuse the coordinate parser: `(\xLoss+\xR)/2` contains parentheses, so it has to be braced. `-\dy/2` does not strictly need them.
+`({(\xLoss+\xR)/2},{-\dy/2})` is not calc at all. It is an ordinary `(x,y)` whose _components_ are pgfmath expressions. The braces are there because a component holding a comma or a parenthesis would otherwise confuse the coordinate parser: `(\xLoss+\xR)/2` contains parentheses, so it has to be braced. `-\dy/2` does not strictly need them.
 
 Within calc, the partway operator is its own small language. `($(\xF,\ext)!0.5!(bbend)$)` is the point halfway between the two, and the variants change what the middle term means: a fraction walks that proportion of the way, a length like `!5mm!` walks a fixed distance instead, an angle as in `!0.5!90:` turns at the point it reaches, and a coordinate in the middle — `($(a)!(c)!(b)$)` — projects `c` onto the line from `a` to `b`.
 

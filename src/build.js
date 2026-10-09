@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const vscode = require('vscode');
-const { execFile, spawn } = require('node:child_process');
-const path = require('node:path');
+const vscode = require("vscode");
+const { execFile, spawn } = require("node:child_process");
+const path = require("node:path");
 
 const TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -12,23 +12,23 @@ const TIMEOUT_MS = 10 * 60 * 1000;
  * silently shaped by one project's conventions.
  */
 function config() {
-  const c = vscode.workspace.getConfiguration('tikz');
-  let figureFolders;
-  try {
-    figureFolders = new RegExp(`(?:^|/)(?:${c.get('figureFolders')})$`);
-  } catch {
-    vscode.window.showWarningMessage('TikZ: tikz.figureFolders is not a valid regular expression.');
-    figureFolders = /(?!)/;
-  }
-  return {
-    figureScript: c.get('figureScript'),
-    buildScript: c.get('buildScript'),
-    scriptFolders: c.get('scriptFolders'),
-    figurePdf: c.get('figurePdf'),
-    documentPdf: c.get('documentPdf'),
-    viewer: c.get('viewer'),
-    figureFolders,
-  };
+    const c = vscode.workspace.getConfiguration("tikz");
+    let figureFolders;
+    try {
+        figureFolders = new RegExp(`(?:^|/)(?:${c.get("figureFolders")})$`);
+    } catch {
+        vscode.window.showWarningMessage("TikZ: tikz.figureFolders is not a valid regular expression.");
+        figureFolders = /(?!)/;
+    }
+    return {
+        figureScript: c.get("figureScript"),
+        buildScript: c.get("buildScript"),
+        scriptFolders: c.get("scriptFolders"),
+        figurePdf: c.get("figurePdf"),
+        documentPdf: c.get("documentPdf"),
+        viewer: c.get("viewer"),
+        figureFolders,
+    };
 }
 
 /**
@@ -44,44 +44,44 @@ function config() {
  * case asks for one instead of reporting a failure.
  */
 async function runBuildAndReport(context) {
-  try {
-    await build(context);
-  } catch (err) {
-    // Bound to a key with no terminal behind it, so an unhandled throw would
-    // otherwise surface as a bare stack trace with no clue which step failed.
-    vscode.window.showErrorMessage(`TikZ build error: ${err?.message ?? err}`);
-  }
+    try {
+        await build(context);
+    } catch (err) {
+        // Bound to a key with no terminal behind it, so an unhandled throw would
+        // otherwise surface as a bare stack trace with no clue which step failed.
+        vscode.window.showErrorMessage(`TikZ build error: ${err?.message ?? err}`);
+    }
 }
 
 async function build(context) {
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  if (!folder) {
-    vscode.window.showErrorMessage('TikZ: no folder open, nothing to build.');
-    return;
-  }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+        vscode.window.showErrorMessage("TikZ: no folder open, nothing to build.");
+        return;
+    }
 
-  const plan = await choose(folder.uri);
-  if (!plan) {
-    await askForScript(context);
-    return;
-  }
+    const plan = await choose(folder.uri);
+    if (!plan) {
+        await askForScript(context);
+        return;
+    }
 
-  const started = Date.now();
-  const result = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Window, title: `${plan.label}…` },
-    () => run(plan),
-  );
-  const seconds = ((Date.now() - started) / 1000).toFixed(1);
+    const started = Date.now();
+    const result = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Window, title: `${plan.label}…` },
+        () => run(plan)
+    );
+    const seconds = ((Date.now() - started) / 1000).toFixed(1);
 
-  const status = await readStatus(plan.cwd);
-  if (status && !status.ok) {
-    vscode.window.showErrorMessage(`Build failed — ${status.message}`);
-  } else if (result.code !== 0) {
-    vscode.window.showErrorMessage(`${plan.label} failed (exit ${result.code})`);
-  } else {
-    const what = status?.message ?? plan.label;
-    vscode.window.showInformationMessage(`Built ${what} in ${seconds}s`);
-  }
+    const status = await readStatus(plan.cwd);
+    if (status && !status.ok) {
+        vscode.window.showErrorMessage(`Build failed — ${status.message}`);
+    } else if (result.code !== 0) {
+        vscode.window.showErrorMessage(`${plan.label} failed (exit ${result.code})`);
+    } else {
+        const what = status?.message ?? plan.label;
+        vscode.window.showInformationMessage(`Built ${what} in ${seconds}s`);
+    }
 }
 
 /**
@@ -92,15 +92,15 @@ async function build(context) {
  * @param {vscode.ExtensionContext} context
  */
 async function askForScript(context) {
-  const { figureScript, buildScript } = config();
-  const choice = await vscode.window.showInformationMessage(
-    `TikZ needs a build script: no ${figureScript} or ${buildScript} in this workspace. ` +
-      'The build command runs one of your own; copy an example to start.',
-    'Show example',
-  );
-  if (!choice) return;
-  const uri = vscode.Uri.joinPath(context.extensionUri, 'examples', 'fig.sh');
-  await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));
+    const { figureScript, buildScript } = config();
+    const choice = await vscode.window.showInformationMessage(
+        `TikZ needs a build script: no ${figureScript} or ${buildScript} in this workspace. ` +
+            "The build command runs one of your own; copy an example to start.",
+        "Show example"
+    );
+    if (!choice) return;
+    const uri = vscode.Uri.joinPath(context.extensionUri, "examples", "fig.sh");
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));
 }
 
 /**
@@ -109,25 +109,25 @@ async function askForScript(context) {
  * @returns {Promise<{script: string, args: string[], cwd: string, label: string} | null>}
  */
 async function choose(folder) {
-  const { figureScript, buildScript, scriptFolders, figureFolders } = config();
+    const { figureScript, buildScript, scriptFolders, figureFolders } = config();
 
-  const figure = activeFigure(figureFolders);
+    const figure = activeFigure(figureFolders);
 
-  for (const dir of scriptFolders) {
-    const cwd = path.join(folder.fsPath, dir);
-    if (figure && (await exists(path.join(cwd, figureScript)))) {
-      return {
-        script: figureScript,
-        args: [figure.uri.fsPath],
-        cwd,
-        label: `preview ${path.basename(figure.uri.fsPath, '.tex')}`,
-      };
+    for (const dir of scriptFolders) {
+        const cwd = path.join(folder.fsPath, dir);
+        if (figure && (await exists(path.join(cwd, figureScript)))) {
+            return {
+                script: figureScript,
+                args: [figure.uri.fsPath],
+                cwd,
+                label: `preview ${path.basename(figure.uri.fsPath, ".tex")}`,
+            };
+        }
+        if (await exists(path.join(cwd, buildScript))) {
+            return { script: buildScript, args: [], cwd, label: "build" };
+        }
     }
-    if (await exists(path.join(cwd, buildScript))) {
-      return { script: buildScript, args: [], cwd, label: 'build' };
-    }
-  }
-  return null;
+    return null;
 }
 
 /**
@@ -136,34 +136,31 @@ async function choose(folder) {
  * @returns {vscode.TextDocument | null}
  */
 function activeFigure(figureFolders) {
-  const active = vscode.window.activeTextEditor?.document;
-  const isFigure =
-    active?.languageId &&
-    /^(latex|tex|tikz)$/.test(active.languageId) &&
-    figureFolders.test(path.dirname(active.uri.fsPath));
-  return isFigure ? active : null;
+    const active = vscode.window.activeTextEditor?.document;
+    const isFigure =
+        active?.languageId &&
+        /^(latex|tex|tikz)$/.test(active.languageId) &&
+        figureFolders.test(path.dirname(active.uri.fsPath));
+    return isFigure ? active : null;
 }
 
 /** @param {{script: string, args: string[], cwd: string}} plan */
 function run(plan) {
-  return new Promise((resolve) => {
-    execFile(
-      plan.script,
-      plan.args,
-      { cwd: plan.cwd, timeout: TIMEOUT_MS },
-      (error) => resolve({ code: error ? (error.code ?? 1) : 0 }),
-    );
-  });
+    return new Promise((resolve) => {
+        execFile(plan.script, plan.args, { cwd: plan.cwd, timeout: TIMEOUT_MS }, (error) =>
+            resolve({ code: error ? (error.code ?? 1) : 0 })
+        );
+    });
 }
 
 /** @param {string} file */
 async function exists(file) {
-  try {
-    await vscode.workspace.fs.stat(vscode.Uri.file(file));
-    return true;
-  } catch {
-    return false;
-  }
+    try {
+        await vscode.workspace.fs.stat(vscode.Uri.file(file));
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 /**
@@ -172,15 +169,17 @@ async function exists(file) {
  * @returns {Promise<{ok: boolean, message: string} | null>}
  */
 async function readStatus(cwd) {
-  try {
-    const uri = vscode.Uri.file(path.join(cwd, 'build', '.build-status'));
-    const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf8').trim();
-    const [verdict, ...rest] = text.split(/\s+/);
-    if (verdict !== 'ok' && verdict !== 'fail') return null;
-    return { ok: verdict === 'ok', message: rest.join(' ') };
-  } catch {
-    return null;
-  }
+    try {
+        const uri = vscode.Uri.file(path.join(cwd, "build", ".build-status"));
+        const text = Buffer.from(await vscode.workspace.fs.readFile(uri))
+            .toString("utf8")
+            .trim();
+        const [verdict, ...rest] = text.split(/\s+/);
+        if (verdict !== "ok" && verdict !== "fail") return null;
+        return { ok: verdict === "ok", message: rest.join(" ") };
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -193,63 +192,61 @@ async function readStatus(cwd) {
  * than duplicating it.
  */
 async function viewAndReport() {
-  try {
-    await view();
-  } catch (err) {
-    vscode.window.showErrorMessage(`TikZ view error: ${err?.message ?? err}`);
-  }
+    try {
+        await view();
+    } catch (err) {
+        vscode.window.showErrorMessage(`TikZ view error: ${err?.message ?? err}`);
+    }
 }
 
 async function view() {
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  if (!folder) {
-    vscode.window.showErrorMessage('TikZ: no folder open, nothing to view.');
-    return;
-  }
-
-  const { figurePdf, documentPdf, scriptFolders, figureFolders, viewer } = config();
-  const relative = activeFigure(figureFolders) ? figurePdf : documentPdf;
-
-  let pdf = null;
-  for (const dir of scriptFolders) {
-    const candidate = path.join(folder.uri.fsPath, dir, relative);
-    if (await exists(candidate)) {
-      pdf = candidate;
-      break;
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+        vscode.window.showErrorMessage("TikZ: no folder open, nothing to view.");
+        return;
     }
-  }
-  if (!pdf) {
-    vscode.window.showWarningMessage(`TikZ: no ${relative} to view — build it first.`);
-    return;
-  }
 
-  const app = viewer || (await findTeXstudio());
-  if (!app) {
-    vscode.window.showErrorMessage('TikZ: no viewer found — set tikz.viewer.');
-    return;
-  }
-  const binary = await executable(app);
-  if (!binary) {
-    vscode.window.showErrorMessage(`TikZ: ${path.basename(app)} holds no executable to run.`);
-    return;
-  }
+    const { figurePdf, documentPdf, scriptFolders, figureFolders, viewer } = config();
+    const relative = activeFigure(figureFolders) ? figurePdf : documentPdf;
 
-  // The binary is run directly rather than through `open -a`. TeXstudio's bundle lists
-  // only tex, bib, sty, cls and mp in CFBundleDocumentTypes, so `open` accepts a PDF,
-  // exits 0, raises the window -- and drops the file, leaving whatever tab was already
-  // showing. Handing the path to the executable is what the running instance acts on.
-  //
-  // Detached, since a viewer started this way is the application itself and must outlive
-  // the window that asked for it. A second invocation forwards the file and exits, so
-  // only the failure to spawn is worth reporting; an exit code arrives too late to mean
-  // anything.
-  const child = spawn(binary, [pdf], { detached: true, stdio: 'ignore' });
-  child.on('error', (error) => {
-    vscode.window.showErrorMessage(
-      `TikZ: could not view ${path.basename(pdf)} — ${error.message}`,
-    );
-  });
-  child.unref();
+    let pdf = null;
+    for (const dir of scriptFolders) {
+        const candidate = path.join(folder.uri.fsPath, dir, relative);
+        if (await exists(candidate)) {
+            pdf = candidate;
+            break;
+        }
+    }
+    if (!pdf) {
+        vscode.window.showWarningMessage(`TikZ: no ${relative} to view — build it first.`);
+        return;
+    }
+
+    const app = viewer || (await findTeXstudio());
+    if (!app) {
+        vscode.window.showErrorMessage("TikZ: no viewer found — set tikz.viewer.");
+        return;
+    }
+    const binary = await executable(app);
+    if (!binary) {
+        vscode.window.showErrorMessage(`TikZ: ${path.basename(app)} holds no executable to run.`);
+        return;
+    }
+
+    // The binary is run directly rather than through `open -a`. TeXstudio's bundle lists
+    // only tex, bib, sty, cls and mp in CFBundleDocumentTypes, so `open` accepts a PDF,
+    // exits 0, raises the window -- and drops the file, leaving whatever tab was already
+    // showing. Handing the path to the executable is what the running instance acts on.
+    //
+    // Detached, since a viewer started this way is the application itself and must outlive
+    // the window that asked for it. A second invocation forwards the file and exits, so
+    // only the failure to spawn is worth reporting; an exit code arrives too late to mean
+    // anything.
+    const child = spawn(binary, [pdf], { detached: true, stdio: "ignore" });
+    child.on("error", (error) => {
+        vscode.window.showErrorMessage(`TikZ: could not view ${path.basename(pdf)} — ${error.message}`);
+    });
+    child.unref();
 }
 
 /**
@@ -259,15 +256,15 @@ async function view() {
  * @returns {Promise<string | null>}
  */
 async function executable(app) {
-  if (!app.endsWith('.app')) return app;
-  try {
-    const dir = path.join(app, 'Contents', 'MacOS');
-    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(dir));
-    const [name] = entries.find(([, type]) => type === vscode.FileType.File) ?? [];
-    return name ? path.join(dir, name) : null;
-  } catch {
-    return null;
-  }
+    if (!app.endsWith(".app")) return app;
+    try {
+        const dir = path.join(app, "Contents", "MacOS");
+        const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(dir));
+        const [name] = entries.find(([, type]) => type === vscode.FileType.File) ?? [];
+        return name ? path.join(dir, name) : null;
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -275,17 +272,17 @@ async function executable(app) {
  * hardcoding a path would break at the next one. Newest by name wins.
  */
 async function findTeXstudio() {
-  if (process.platform !== 'darwin') return null;
-  try {
-    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file('/Applications'));
-    const apps = entries
-      .map(([name]) => name)
-      .filter((name) => /^texstudio.*\.app$/i.test(name))
-      .sort();
-    return apps.length ? path.join('/Applications', apps[apps.length - 1]) : null;
-  } catch {
-    return null;
-  }
+    if (process.platform !== "darwin") return null;
+    try {
+        const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file("/Applications"));
+        const apps = entries
+            .map(([name]) => name)
+            .filter((name) => /^texstudio.*\.app$/i.test(name))
+            .sort();
+        return apps.length ? path.join("/Applications", apps[apps.length - 1]) : null;
+    } catch {
+        return null;
+    }
 }
 
 module.exports = { runBuildAndReport, viewAndReport };

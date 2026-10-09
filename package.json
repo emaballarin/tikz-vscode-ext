@@ -1,157 +1,169 @@
 {
-  "name": "tikz-vscode-ext",
-  "displayName": "TikZ",
-  "description": "Write TikZ figures in VS Code: syntax highlighting, and one key to build and preview the figure you are editing.",
-  "version": "0.1.0",
-  "icon": "images/icon.png",
-  "publisher": "atcold",
-  "private": true,
-  "license": "MIT",
-  "engines": {
-    "vscode": "^1.75.0"
-  },
-  "categories": [
-    "Programming Languages"
-  ],
-  "main": "./src/extension.js",
-  "activationEvents": [
-    "onLanguage:latex",
-    "onLanguage:tex",
-    "onLanguage:tikz",
-    "onCommand:tikz.build",
-    "onCommand:tikz.view",
-    "onCommand:tikz.rebuildStyleIndex"
-  ],
-  "contributes": {
-    "languages": [
-      {
-        "id": "tikz",
-        "aliases": [
-          "TikZ"
-        ],
-        "extensions": [
-          ".tikz"
-        ],
-        "configuration": "./syntaxes/tikz-language-configuration.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "tikz.build",
-        "title": "TikZ: Build and report"
-      },
-      {
-        "command": "tikz.view",
-        "title": "TikZ: View the PDF"
-      },
-      {
-        "command": "tikz.rebuildStyleIndex",
-        "title": "TikZ: Rebuild style index"
-      }
-    ],
-    "configuration": {
-      "title": "TikZ",
-      "properties": {
-        "tikz.figureScript": {
-          "type": "string",
-          "default": "./fig.sh",
-          "description": "Script run to preview a single figure. It is given the path of the active file, and run from the first folder that contains it (the workspace root, or a subfolder named in tikz.scriptFolders)."
-        },
-        "tikz.buildScript": {
-          "type": "string",
-          "default": "./build.sh",
-          "description": "Script run to build the whole document, when the active file is not a figure."
-        },
-        "tikz.figureFolders": {
-          "type": "string",
-          "default": "(?:[A-Za-z0-9_]+-figs|tikz-figs|tikz-code)",
-          "description": "Regular expression matching the name of a folder that holds figures. A file in one of these is previewed with tikz.figureScript rather than triggering a full build."
-        },
-        "tikz.figurePdf": {
-          "type": "string",
-          "default": "build/fig.pdf",
-          "description": "PDF shown by TikZ: View the PDF when the active file is a figure, relative to the folder holding the scripts."
-        },
-        "tikz.documentPdf": {
-          "type": "string",
-          "default": "build/main.pdf",
-          "description": "PDF shown by TikZ: View the PDF otherwise, relative to the folder holding the scripts."
-        },
-        "tikz.viewer": {
-          "type": "string",
-          "default": "",
-          "description": "Application to show the PDF in. Empty means the newest /Applications/texstudio*.app, since the bundle is renamed on every upgrade."
-        },
-        "tikz.scriptFolders": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            ".",
-            "latex"
-          ],
-          "description": "Folders under the workspace root to search for the scripts, in order. Lets the sources sit in a subdirectory."
-        }
-      }
+    "name": "tikz-vscode-ext",
+    "displayName": "TikZ",
+    "description": "Write TikZ figures in VS Code: syntax highlighting, and one key to build and preview the figure you are editing.",
+    "version": "0.1.0",
+    "icon": "images/icon.png",
+    "publisher": "atcold",
+    "private": true,
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.75.0"
     },
-    "semanticTokenTypes": [
-      {
-        "id": "tikzMacro",
-        "superType": "variable",
-        "description": "A control sequence defined in this file with \\def, \\newcommand or \\pgfmathsetmacro."
-      },
-      {
-        "id": "tikzStyle",
-        "superType": "type",
-        "description": "A pgfkeys style defined by name/.style anywhere in the workspace."
-      }
+    "categories": [
+        "Programming Languages"
     ],
-    "semanticTokenScopes": [
-      {
-        "language": "latex",
-        "scopes": {
-          "tikzMacro": ["variable.other.tikz"],
-          "tikzStyle": ["entity.name.type.tikz"]
-        }
-      },
-      {
-        "language": "tex",
-        "scopes": {
-          "tikzMacro": ["variable.other.tikz"],
-          "tikzStyle": ["entity.name.type.tikz"]
-        }
-      },
-      {
-        "language": "tikz",
-        "scopes": {
-          "tikzMacro": ["variable.other.tikz"],
-          "tikzStyle": ["entity.name.type.tikz"]
-        }
-      }
+    "main": "./src/extension.js",
+    "activationEvents": [
+        "onLanguage:latex",
+        "onLanguage:tex",
+        "onLanguage:tikz",
+        "onCommand:tikz.build",
+        "onCommand:tikz.view",
+        "onCommand:tikz.rebuildStyleIndex"
     ],
-    "grammars": [
-      {
-        "language": "tikz",
-        "scopeName": "text.tex.latex.tikz-file",
-        "path": "./syntaxes/tikz-file.tmLanguage.json"
-      },
-      {
-        "scopeName": "tikz.injection",
-        "path": "./syntaxes/tikz-injection.tmLanguage.json",
-        "injectTo": [
-          "text.tex.latex",
-          "text.tex.latex.tikz-file"
+    "contributes": {
+        "languages": [
+            {
+                "id": "tikz",
+                "aliases": [
+                    "TikZ"
+                ],
+                "extensions": [
+                    ".tikz"
+                ],
+                "configuration": "./syntaxes/tikz-language-configuration.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "tikz.build",
+                "title": "TikZ: Build and report"
+            },
+            {
+                "command": "tikz.view",
+                "title": "TikZ: View the PDF"
+            },
+            {
+                "command": "tikz.rebuildStyleIndex",
+                "title": "TikZ: Rebuild style index"
+            }
+        ],
+        "configuration": {
+            "title": "TikZ",
+            "properties": {
+                "tikz.figureScript": {
+                    "type": "string",
+                    "default": "./fig.sh",
+                    "description": "Script run to preview a single figure. It is given the path of the active file, and run from the first folder that contains it (the workspace root, or a subfolder named in tikz.scriptFolders)."
+                },
+                "tikz.buildScript": {
+                    "type": "string",
+                    "default": "./build.sh",
+                    "description": "Script run to build the whole document, when the active file is not a figure."
+                },
+                "tikz.figureFolders": {
+                    "type": "string",
+                    "default": "(?:[A-Za-z0-9_]+-figs|tikz-figs|tikz-code)",
+                    "description": "Regular expression matching the name of a folder that holds figures. A file in one of these is previewed with tikz.figureScript rather than triggering a full build."
+                },
+                "tikz.figurePdf": {
+                    "type": "string",
+                    "default": "build/fig.pdf",
+                    "description": "PDF shown by TikZ: View the PDF when the active file is a figure, relative to the folder holding the scripts."
+                },
+                "tikz.documentPdf": {
+                    "type": "string",
+                    "default": "build/main.pdf",
+                    "description": "PDF shown by TikZ: View the PDF otherwise, relative to the folder holding the scripts."
+                },
+                "tikz.viewer": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Application to show the PDF in. Empty means the newest /Applications/texstudio*.app, since the bundle is renamed on every upgrade."
+                },
+                "tikz.scriptFolders": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        ".",
+                        "latex"
+                    ],
+                    "description": "Folders under the workspace root to search for the scripts, in order. Lets the sources sit in a subdirectory."
+                }
+            }
+        },
+        "semanticTokenTypes": [
+            {
+                "id": "tikzMacro",
+                "superType": "variable",
+                "description": "A control sequence defined in this file with \\def, \\newcommand or \\pgfmathsetmacro."
+            },
+            {
+                "id": "tikzStyle",
+                "superType": "type",
+                "description": "A pgfkeys style defined by name/.style anywhere in the workspace."
+            }
+        ],
+        "semanticTokenScopes": [
+            {
+                "language": "latex",
+                "scopes": {
+                    "tikzMacro": [
+                        "variable.other.tikz"
+                    ],
+                    "tikzStyle": [
+                        "entity.name.type.tikz"
+                    ]
+                }
+            },
+            {
+                "language": "tex",
+                "scopes": {
+                    "tikzMacro": [
+                        "variable.other.tikz"
+                    ],
+                    "tikzStyle": [
+                        "entity.name.type.tikz"
+                    ]
+                }
+            },
+            {
+                "language": "tikz",
+                "scopes": {
+                    "tikzMacro": [
+                        "variable.other.tikz"
+                    ],
+                    "tikzStyle": [
+                        "entity.name.type.tikz"
+                    ]
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "tikz",
+                "scopeName": "text.tex.latex.tikz-file",
+                "path": "./syntaxes/tikz-file.tmLanguage.json"
+            },
+            {
+                "scopeName": "tikz.injection",
+                "path": "./syntaxes/tikz-injection.tmLanguage.json",
+                "injectTo": [
+                    "text.tex.latex",
+                    "text.tex.latex.tikz-file"
+                ]
+            },
+            {
+                "scopeName": "tikz.toplevel",
+                "path": "./syntaxes/tikz-toplevel.tmLanguage.json",
+                "injectTo": [
+                    "text.tex.latex",
+                    "text.tex.latex.tikz-file"
+                ]
+            }
         ]
-      },
-      {
-        "scopeName": "tikz.toplevel",
-        "path": "./syntaxes/tikz-toplevel.tmLanguage.json",
-        "injectTo": [
-          "text.tex.latex",
-          "text.tex.latex.tikz-file"
-        ]
-      }
-    ]
-  }
+    }
 }
