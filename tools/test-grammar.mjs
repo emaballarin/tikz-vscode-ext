@@ -13,10 +13,13 @@
 // matters, since CI runs this against whatever VS Code shipped last night. A host change
 // still shows up wherever it changes our scopes: renaming the tikzpicture scope the
 // injection keys on would empty every record, as it would empty every picture.
+//
+// The runaway check in tools/audit.mjs is held here too: no fixture may run away, and every
+// file under test/runaway/ must, so the check is seen to fail as well as to pass.
 
 import fs from "node:fs";
 import path from "node:path";
-import { INITIAL, REPO, VSCODE_BUILD, grammarFor, ourScopes, registry } from "./engine.mjs";
+import { INITIAL, REPO, VSCODE_BUILD, grammarFor, ourScopes, registry, runawaySince } from "./engine.mjs";
 
 const update = process.argv.includes("--update");
 const TEST = path.join(REPO, "test");
@@ -119,6 +122,22 @@ for (const file of fixtures()) {
     }
 }
 
+for (const file of fixtures()) {
+    const since = await runawaySince(file);
+    if (since !== null) {
+        failed++;
+        console.error(`FAIL ${path.relative(REPO, file)} runs away from line ${since}`);
+    }
+}
+const RUNAWAY = path.join(TEST, "runaway");
+const runaways = fs.readdirSync(RUNAWAY).filter((name) => /\.(tex|tikz)$/.test(name));
+for (const name of runaways) {
+    if ((await runawaySince(path.join(RUNAWAY, name))) === null) {
+        failed++;
+        console.error(`FAIL test/runaway/${name} is not reported as a runaway`);
+    }
+}
+
 for (const name of fs.readdirSync(TEST).filter((n) => n.endsWith(".scopes"))) {
     if (recorded.has(name)) continue;
     if (update) {
@@ -138,5 +157,5 @@ if (update) {
     );
     process.exit(1);
 } else {
-    console.log(`ok: ${recorded.size} grammar fixtures on ${VSCODE_BUILD}`);
+    console.log(`ok: ${recorded.size} grammar fixtures and ${runaways.length} runaways on ${VSCODE_BUILD}`);
 }

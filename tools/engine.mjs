@@ -122,3 +122,38 @@ export function ourScopes() {
     }
     return names;
 }
+
+const withOurs = registry();
+const hostOnly = registry({ inject: false });
+
+/**
+ * Where a rule of ours that never closes was opened, or null when every one closes.
+ *
+ * The file is tokenised twice, with our injections and without, and the rule stacks are
+ * compared line by line. Whatever depth ours leaves above the host's at the end is a rule
+ * of ours still open, and it was opened on the line after the last one where the two
+ * agreed. Measuring against the host is what lets a fragment end inside its picture, as
+ * every \input figure does, without counting as a runaway. Matching on scope names cannot
+ * tell the two apart: the host's own picture scope, meta.function.environment.latex.tikz,
+ * ends in .tikz as well, and several of our blocks carry no name at all.
+ *
+ * What it cannot see is a block of ours left open where the host would have left one of its
+ * own open too -- a ($ whose $) never comes is, to the host, a $ that never closes. The two
+ * stacks then agree, and rightly so: the file runs away under either grammar alike.
+ * @param {string} file
+ * @returns {Promise<number | null>}
+ */
+export async function runawaySince(file) {
+    const ours = await grammarFor(withOurs, file);
+    const host = await grammarFor(hostOnly, file);
+    let a = INITIAL;
+    let b = INITIAL;
+    let agreed = 0;
+    const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
+    lines.forEach((line, index) => {
+        a = ours.tokenizeLine(line, a).ruleStack;
+        b = host.tokenizeLine(line, b).ruleStack;
+        if (a.depth === b.depth) agreed = index + 1;
+    });
+    return a.depth === b.depth ? null : agreed + 1;
+}

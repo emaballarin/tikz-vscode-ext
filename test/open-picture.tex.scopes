@@ -1,0 +1,21 @@
+   1  % A fragment that ends inside its picture, as one \input mid-figure does. The host
+   2  % picture is still open at the end, and that is normal; none of our rules is.
+   3  \begin{tikzpicture}
+   4    \draw [thick] (0,0) -- (1,1);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "thick"                  support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz

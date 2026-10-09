@@ -7,7 +7,7 @@
 // --raw   omit our injections, showing the stock LaTeX tokenisation alone
 
 import fs from "node:fs";
-import { INITIAL, grammarFor, registry } from "./engine.mjs";
+import { INITIAL, grammarFor, ourScopes, registry } from "./engine.mjs";
 
 const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith("--"));
@@ -21,6 +21,10 @@ if (!file) {
 }
 
 const grammar = await grammarFor(registry({ inject: !raw }), file);
+
+// Green for a token carrying a scope our grammars assign. Not "any scope ending in .tikz":
+// the host's own picture scope ends that way too, and would paint every token green.
+const OURS = ourScopes();
 
 // Drop only the root scopes, which are on every token and tell us nothing. The tikz
 // environment scope stays visible: it is the injection anchor, so seeing it is the point.
@@ -42,7 +46,7 @@ for (const line of text.split(/\r?\n/)) {
         if (!piece.trim()) continue;
         const scopes = t.scopes.filter((s) => !NOISE.test(s));
         if (!scopes.length) continue;
-        const mine = scopes.some((s) => s.endsWith(".tikz"));
+        const mine = scopes.some((s) => OURS.has(s));
         const colour = mine ? "\x1b[32m" : "\x1b[2m";
         console.log(`      ${colour}${JSON.stringify(piece).padEnd(24)}\x1b[0m ${colour}${scopes.join(" ")}\x1b[0m`);
     }

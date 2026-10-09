@@ -1,0 +1,6 @@
+% A brace left open inside an option list, before the picture ends: the open
+% value group swallows \end{tikzpicture} and the host never gets to close it.
+\begin{tikzpicture}
+  \draw [label={oops] (0,0);
+\end{tikzpicture}
+After the picture.

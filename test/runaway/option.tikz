@@ -1,0 +1,3 @@
+% An option list that never closes, in a .tikz file: no \end{...} for it to bail out at.
+\draw [red, thick
+  -- (1,1);
