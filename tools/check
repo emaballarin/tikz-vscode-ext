@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Check that the manifest, the grammars, the source and the README agree.
+
+Every check here is for a mistake that installs fine and fails without a word: a grammar
+whose include names a rule that does not exist matches nothing, a command declared with no
+handler behind it is a menu item that does nothing, a setting nothing reads is a knob
+attached to nothing, and a README table that drifted from the defaults tells an installer
+the wrong thing.
+"""
+
+import json
+import re
+import struct
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# Scopes the stock LaTeX grammar owns. An include into one of these cannot be resolved
+# from here, and an injection may target them.
+HOST_SCOPES = {"text.tex.latex", "text.tex"}
+
+failures = []
+
+
+def check(condition, message):
+    if not condition:
+        failures.append(message)
+
+
+def read_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def source():
+    return "\n".join(p.read_text(encoding="utf-8") for p in sorted((ROOT / "src").glob("*.js")))
+
+
+def constant(path, name):
+    """The string list assigned to `const name = [...]` in a source file."""
+    match = re.search(rf"const {name} = \[([^\]]*)\]", path.read_text(encoding="utf-8"))
+    return re.findall(r'"([^"]+)"', match.group(1)) if match else None
+
+
+def includes(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "include" and isinstance(value, str):
+                yield value
+            else:
+                yield from includes(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from includes(item)
+
+
+def check_grammars(manifest):
+    grammars = {}
+    for entry in manifest["contributes"]["grammars"]:
+        path = ROOT / entry["path"]
+        if not path.is_file():
+            failures.append(f"grammar {entry['path']} is missing")
+            continue
+        grammar = read_json(path)
+        check(
+            grammar.get("scopeName") == entry["scopeName"],
+            f"{entry['path']} calls itself {grammar.get('scopeName')}, the manifest {entry['scopeName']}",
+        )
+        grammars[entry["scopeName"]] = grammar
+
+    for entry in manifest["contributes"]["grammars"]:
+        for target in entry.get("injectTo", []):
+            check(
+                target in HOST_SCOPES or target in grammars,
+                f"{entry['scopeName']} is injected into {target}, which nothing provides",
+            )
+
+    # An include naming a rule that does not exist is not an error to VS Code: the rule
+    # simply matches nothing, and whatever it was meant to colour goes plain.
+    for scope, grammar in grammars.items():
+        repository = grammar.get("repository", {})
+        for target in includes(grammar):
+            if target in ("$self", "$base"):
+                continue
+            if target.startswith("#"):
+                check(target[1:] in repository, f"{scope} includes {target}, which its repository lacks")
+                continue
+            other, _, rule = target.partition("#")
+            if other in HOST_SCOPES:
+                continue
+            check(other in grammars, f"{scope} includes {target}, from a grammar nothing contributes")
+            if other in grammars and rule:
+                check(
+                    rule in grammars[other].get("repository", {}),
+                    f"{scope} includes {target}, which {other}'s repository lacks",
+                )
+
+
+def check_manifest(manifest):
+    main = ROOT / manifest["main"]
+    check(main.is_file(), f"main {manifest['main']} is missing")
+
+    # A broken icon path installs fine and only shows as a blank tile.
+    icon = ROOT / manifest["icon"]
+    if not icon.is_file():
+        failures.append(f"icon {manifest['icon']} is missing")
+    else:
+        header = icon.read_bytes()[:24]
+        check(header[:8] == b"\x89PNG\r\n\x1a\n", f"icon {manifest['icon']} is not a PNG")
+        width, height = struct.unpack(">II", header[16:24])
+        check(width >= 128 and width == height, f"icon is {width}x{height}; it should be square, at least 128")
+
+    for language in manifest["contributes"]["languages"]:
+        configuration = language.get("configuration")
+        if configuration:
+            path = ROOT / configuration
+            check(path.is_file(), f"language configuration {configuration} is missing")
+            if path.is_file():
+                read_json(path)
+
+    code = source()
+    declared = {c["command"] for c in manifest["contributes"]["commands"]}
+    registered = set(re.findall(r'registerCommand\(\s*"([^"]+)"', code))
+    for command in sorted(declared - registered):
+        failures.append(f"command {command} is declared but never registered")
+    for command in sorted(registered - declared):
+        failures.append(f"command {command} is registered but not declared")
+
+    for key in manifest["contributes"]["configuration"]["properties"]:
+        short = key.removeprefix("tikz.")
+        check(f'get("{short}")' in code, f"setting {key} is declared but nothing reads it")
+
+    languages = constant(ROOT / "src" / "extension.js", "LANGUAGES")
+    check(languages is not None, "src/extension.js no longer declares LANGUAGES")
+    events = set(manifest.get("activationEvents", []))
+    token_types = constant(ROOT / "src" / "semantic.js", "TOKEN_TYPES")
+    declared_types = [t["id"] for t in manifest["contributes"]["semanticTokenTypes"]]
+    check(token_types == declared_types, f"semantic token types {token_types} != declared {declared_types}")
+    scoped = {entry["language"]: entry["scopes"] for entry in manifest["contributes"]["semanticTokenScopes"]}
+    for language in languages or []:
+        check(f"onLanguage:{language}" in events, f"no onLanguage:{language} activation event")
+        check(language in scoped, f"no semanticTokenScopes for {language}")
+        for token in declared_types:
+            check(token in scoped.get(language, {}), f"{token} has no fallback scope in {language}")
+
+
+def check_readme(manifest):
+    """The settings table is what an installer reads instead of package.json."""
+    properties = manifest["contributes"]["configuration"]["properties"]
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    rows = {}
+    for line in readme.splitlines():
+        match = re.match(r"\|\s*`(tikz\.\w+)`\s*\|\s*`(.*?)`\s*\|", line)
+        if match:
+            rows[match.group(1)] = match.group(2).replace("\\|", "|")
+    for key, prop in properties.items():
+        if key not in rows:
+            failures.append(f"README settings table has no row for {key}")
+            continue
+        default, shown = prop["default"], rows[key]
+        if isinstance(default, str):
+            ok = shown == default or (default == "" and shown == '""')
+        else:
+            try:
+                ok = json.loads(shown) == default
+            except json.JSONDecodeError:
+                ok = False
+        check(ok, f"README gives {key} the default {shown}, package.json {json.dumps(default)}")
+    for key in sorted(set(rows) - set(properties)):
+        failures.append(f"README settings table lists {key}, which package.json does not declare")
+
+
+def check_examples():
+    # Copied into a project and run as they are, so they have to arrive executable.
+    for example in sorted((ROOT / "examples").glob("*.sh")):
+        check(example.stat().st_mode & 0o111, f"examples/{example.name} is not executable")
+
+
+def main():
+    manifest = read_json(ROOT / "package.json")
+    check_manifest(manifest)
+    check_grammars(manifest)
+    check_readme(manifest)
+    check_examples()
+    if failures:
+        for failure in failures:
+            print(f"FAIL {failure}", file=sys.stderr)
+        sys.exit(1)
+    print("ok: manifest, grammars, source and README agree")
+
+
+if __name__ == "__main__":
+    main()

@@ -14,6 +14,8 @@ else
   RUN() { ./tools/tm "$@"; }
 fi
 
+python3 tools/check
 RUN tools/test-symbols.js
 RUN tools/test-extension.js
 ./tools/tm tools/test-grammar.mjs
+python3 tools/test-tools

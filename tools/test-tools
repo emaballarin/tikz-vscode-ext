@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""Check that the scripts under tools/ still run, without disturbing the tree.
+
+They are normally exercised only by a human running them, so a moved field or a shell
+quoting slip breaks them silently until the day one is needed -- which is how
+tools/package spent its life unable to run on Linux.
+
+Nothing may modify the working tree; the last test hashes it before and after. So
+`package` runs against a copy, and `check` is run against deliberately broken copies as
+well as a good one: a verifier that cannot fail is worth nothing, and its verdict is what
+a release gets gated on.
+"""
+
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import xml.etree.ElementTree as ElementTree
+import zipfile
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+
+ROOT = Path(__file__).resolve().parent.parent
+SKIPPED = {".git", "node_modules", ".vscode-test", "__pycache__"}
+IGNORED = shutil.ignore_patterns("node_modules", ".vscode-test", "__pycache__", "*.vsix", ".DS_Store")
+
+failures = []
+run = 0
+
+
+def test(name):
+    """Decorator: run the body, collect the failure rather than stopping at the first."""
+
+    def wrap(body):
+        global run
+        run += 1
+        try:
+            body()
+        except Exception as error:  # noqa: BLE001 - a failed check is a report, not a crash
+            failures.append(f"{name}\n  {type(error).__name__}: {error}")
+
+    return wrap
+
+
+def digest(root):
+    """A hash of every file under `root`, path and content alike."""
+    total = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        relative = path.relative_to(root)
+        if relative.parts and relative.parts[0] in SKIPPED:
+            continue
+        if path.suffix == ".vsix":
+            continue
+        total.update(str(relative).encode("utf-8"))
+        total.update(path.read_bytes())
+    return total.hexdigest()
+
+
+def copy_tree(destination, git=True):
+    """The repository, minus what packaging and testing leave lying around. The history
+    comes along by default, since tools/package reads it to pin the README's images."""
+    ignore = IGNORED if git else shutil.ignore_patterns(".git", *SKIPPED, "*.vsix", ".DS_Store")
+    shutil.copytree(ROOT, destination, ignore=ignore, symlinks=True)
+    return destination
+
+
+def run_script(script, cwd, *args):
+    return subprocess.run(
+        [str(script), *args], cwd=str(cwd), capture_output=True, text=True, timeout=300, check=False
+    )
+
+
+def edit_json(path, mutate):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    mutate(data)
+    path.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def package(tree):
+    """Run tools/package in `tree` and return the vsix it announced."""
+    result = run_script(tree / "tools" / "package", tree)
+    assert result.returncode == 0, f"exit {result.returncode}: {result.stderr.strip()}"
+    vsix = Path(result.stdout.strip().splitlines()[-1])
+    assert vsix.is_file(), f"{vsix} was announced but not written"
+    return vsix, result
+
+
+NAMESPACE = {"v": "http://schemas.microsoft.com/developer/vsx-schema/2011"}
+
+BEFORE = digest(ROOT)
+
+
+@test("every script under tools/ is executable and has a shebang")
+def _():
+    for script in sorted(ROOT.glob("tools/*")):
+        if script.suffix in (".js", ".mjs") or not script.is_file():
+            continue
+        assert script.stat().st_mode & 0o111, f"{script.name} is not executable"
+        first = script.read_bytes().split(b"\n", 1)[0]
+        assert first.startswith(b"#!"), f"{script.name} has no shebang"
+
+
+@test("tools/check passes on the tree as it stands")
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        good = copy_tree(Path(tmp) / "good", git=False)
+        result = run_script(good / "tools" / "check", good)
+        assert result.returncode == 0, f"exit {result.returncode}: {result.stderr.strip()}"
+        assert "ok:" in result.stdout, result.stdout
+
+
+@test("tools/check fails on trees it is supposed to reject")
+def _():
+    # Each corruption targets a different check, so a single one going vacuous is caught.
+    def broken(mutate, expected):
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = copy_tree(Path(tmp) / "broken", git=False)
+            mutate(tree)
+            result = run_script(tree / "tools" / "check", tree)
+            assert result.returncode != 0, f"accepted a tree it should reject ({expected})"
+            assert expected in result.stderr, f"expected {expected!r}, got: {result.stderr.strip()}"
+
+    def drop_grammar(tree):
+        (tree / "syntaxes" / "tikz-toplevel.tmLanguage.json").unlink()
+
+    def break_include(tree):
+        path = tree / "syntaxes" / "tikz-injection.tmLanguage.json"
+        path.write_text(path.read_text(encoding="utf-8").replace('"#dimension"', '"#dimensions"', 1))
+
+    def misstate_default(tree):
+        path = tree / "README.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("`./fig.sh`", "`./figure.sh`", 1))
+
+    def orphan_command(tree):
+        edit_json(
+            tree / "package.json",
+            lambda m: m["contributes"]["commands"].append({"command": "tikz.ghost", "title": "TikZ: Ghost"}),
+        )
+
+    def unread_setting(tree):
+        edit_json(
+            tree / "package.json",
+            lambda m: m["contributes"]["configuration"]["properties"].update(
+                {"tikz.ghost": {"type": "string", "default": "", "description": "Nothing reads this."}}
+            ),
+        )
+
+    def drop_icon(tree):
+        (tree / "images" / "icon.png").unlink()
+
+    broken(drop_grammar, "grammar ./syntaxes/tikz-toplevel.tmLanguage.json is missing")
+    broken(break_include, "includes #dimensions, which its repository lacks")
+    broken(misstate_default, "README gives tikz.figureScript the default ./figure.sh")
+    broken(orphan_command, "command tikz.ghost is declared but never registered")
+    broken(unread_setting, "setting tikz.ghost is declared but nothing reads it")
+    broken(drop_icon, "is missing")
+
+
+@test("tools/package builds an installable vsix from a copy of the tree")
+def _():
+    if shutil.which("zip") is None:
+        raise AssertionError("no zip on this machine, so tools/package cannot run here")
+    manifest = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            members = set(archive.namelist())
+            for required in (
+                "extension.vsixmanifest",
+                "[Content_Types].xml",
+                "extension/package.json",
+                "extension/README.md",
+                "extension/LICENSE",
+                "extension/src/extension.js",
+                "extension/syntaxes/tikz-injection.tmLanguage.json",
+                "extension/examples/fig.sh",
+                "extension/images/icon.png",
+            ):
+                assert required in members, f"{required} is missing from the vsix"
+            assert not any(name.startswith("extension/.git/") for name in members), ".git shipped"
+            document = ElementTree.fromstring(archive.read("extension.vsixmanifest"))
+            readme = archive.read("extension/README.md").decode("utf-8")
+
+        identity = document.find(".//v:Identity", NAMESPACE)
+        assert identity.get("Id") == manifest["name"], identity.get("Id")
+        assert identity.get("Version") == manifest["version"], identity.get("Version")
+        assert identity.get("Publisher") == manifest["publisher"], identity.get("Publisher")
+        assert document.find(".//v:DisplayName", NAMESPACE).text == manifest["displayName"]
+
+        # The extension page draws only http(s) images, so the packaged README must point at
+        # GitHub, pinned to a commit, wherever the checked-in one points at the file.
+        assert "](images/" not in readme, "the packaged README still points at images/ relatively"
+        if "raw.githubusercontent.com/" not in readme:
+            raise AssertionError("the packaged README lost its image instead of pinning it")
+
+
+@test("none of the above touched the working tree")
+def _():
+    assert digest(ROOT) == BEFORE, "a tool test modified the repository"
+    assert not list(ROOT.glob("*.vsix")), "a vsix was left in the tree"
+
+
+if failures:
+    for failure in failures:
+        print(f"FAIL {failure}", file=sys.stderr)
+    sys.exit(1)
+print(f"ok: {run} tool tests")
