@@ -1,0 +1,8 @@
+% TikZ outside a picture: preamble style definitions and inline one-liners.
+\tikzset{
+  neuron/.style={circle, draw, minimum size=6mm},
+  every node/.append style={font=\small},
+}
+Text with an inline \tikz \draw [red] (0,0) -- (1em,0); picture.
+Prose that merely mentions a circle to the left, or a node at noon, is left alone.
+\pgfkeys{/tikz/.cd, flow/.style={->, >=stealth}}

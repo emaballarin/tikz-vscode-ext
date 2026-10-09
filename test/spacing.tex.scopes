@@ -1,0 +1,81 @@
+   1  % TeX spacing macros take the maths scope, so \qquad between two formulas merges with
+   2  % them instead of reading as a path command. The control is the first node: spacing
+   3  % *inside* a formula must stay part of the one flat string, which the -string negation
+   4  % on the injection selector is what guarantees.
+   5  \begin{tikzpicture}
+   6    \node at (0,0) {\(a\,b\quad c\)};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "a\\,b\\quad c"          string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        ";"                      punctuation.terminator.tikz
+   7    \node at (1,1) {\(x\)\qquad\(y\)};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "x"                      string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        "\\qquad"                string.other.math.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "y"                      string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        ";"                      punctuation.terminator.tikz
+   8    \node at (2,2) {\(p\)\hspace{1cm}\(q\)};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "p"                      string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        "\\hspace"               string.other.math.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "q"                      string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        ";"                      punctuation.terminator.tikz
+   9    \node at (3,3) {left\hfill right};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "3"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "3"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "\\hfill"                string.other.math.tikz
+        ";"                      punctuation.terminator.tikz
+  10    \draw (0,0) -- (1,1);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  11  \end{tikzpicture}

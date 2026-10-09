@@ -1,0 +1,107 @@
+   1  % A figure kept in a file of its own: picture body from the first line, the
+   2  % \begin{tikzpicture} being in the parent that \inputs it.
+   3  \tikzset{box/.style={draw, minimum width=2cm}}
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "tikzset"                support.function.general.tex
+        "{"                      punctuation.section.options.begin.tikz
+        "box"                    entity.name.function.style.tikz entity.name.function.tikz
+        "/."                     punctuation.definition.handler.tikz
+        "style"                  keyword.other.handler.tikz
+        "{"                      punctuation.section.group.begin.tikz
+        "draw"                   support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "minimum width"          entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "2"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "}"                      punctuation.section.group.end.tikz
+        "}"                      punctuation.section.options.end.tikz
+   4  \node [box] (a) at (0,0) {first};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "box"                    support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   5  \node [box, right=of a] (b) {second};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "box"                    support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "right"                  entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "of a"                   support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "b"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   6  \draw [->, thick] (a) -- (b);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "->"                     keyword.operator.arrow.tikz
+        ","                      punctuation.separator.tikz
+        "thick"                  support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "b"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   7  \draw ($(a)!.5!(b)$) circle (2pt);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "!"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        ".5"                     meta.coordinate.calc.tikz constant.numeric.tikz
+        "!"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "b"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "circle"                 keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.dimension.tikz
+        "pt"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   8  \begin{scope}[xshift=1cm]
+        "["                      punctuation.section.options.begin.tikz
+        "xshift"                 entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "]"                      punctuation.section.options.end.tikz
+   9    \draw (0,0) rectangle (1,1);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "rectangle"              keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  10  \end{scope}

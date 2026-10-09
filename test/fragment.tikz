@@ -1,0 +1,10 @@
+% A figure kept in a file of its own: picture body from the first line, the
+% \begin{tikzpicture} being in the parent that \inputs it.
+\tikzset{box/.style={draw, minimum width=2cm}}
+\node [box] (a) at (0,0) {first};
+\node [box, right=of a] (b) {second};
+\draw [->, thick] (a) -- (b);
+\draw ($(a)!.5!(b)$) circle (2pt);
+\begin{scope}[xshift=1cm]
+  \draw (0,0) rectangle (1,1);
+\end{scope}

@@ -1,0 +1,199 @@
+   1  % Path syntax whose words are also English. Each operator is used the way TikZ
+   2  % uses it, and the same words appear in node text, where they are only text.
+   3  \begin{tikzpicture}
+   4    \draw (a) .. controls (b) and (c) .. (d);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "b"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "and"                    keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "c"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "d"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   5    \draw (a) ..controls (b)..(d);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "..controls"             keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "b"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "d"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   6    \draw (a) to[bend left] (b) to (c);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "to"                     keyword.control.path.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "bend left"              support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "b"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "to"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "c"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   7    \draw (0,0) circle (1cm) (2,0) circle [radius=5mm];
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "circle"                 keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "circle"                 keyword.control.path.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "radius"                 entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "5"                      constant.numeric.dimension.tikz
+        "mm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "]"                      punctuation.section.options.end.tikz
+        ";"                      punctuation.terminator.tikz
+   8    \draw (0,0) grid (2,2);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "grid"                   keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   9    \draw (0,0) rectangle (1,1) -- cycle;
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "rectangle"              keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "cycle"                  keyword.control.path.tikz
+        ";"                      punctuation.terminator.tikz
+  10    \draw (0,0) arc (0:90:1cm);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "arc"                    keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        "90"                     constant.numeric.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  11    \path (0,0) node {plain} coordinate (x);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "path"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "node"                   keyword.control.path.tikz
+        "coordinate"             keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "x"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  12    \draw (a) edge[->] (b);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "edge"                   keyword.control.path.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "->"                     keyword.operator.arrow.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "b"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  13    \foreach \x in {1,2} \draw (\x,0) -- +(1,0) -- ++(0,1);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "foreach"                support.function.general.tex
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "x"                      support.function.general.tex
+        "in"                     keyword.control.path.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "x"                      support.function.general.tex
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  14    \node {go to the store in town at noon};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "to"                     keyword.control.path.tikz
+        "in"                     keyword.control.path.tikz
+        ";"                      punctuation.terminator.tikz
+  15    \node {a circle and a grid in a rectangle};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "circle"                 keyword.control.path.tikz
+        "grid"                   keyword.control.path.tikz
+        "in"                     keyword.control.path.tikz
+        "rectangle"              keyword.control.path.tikz
+        ";"                      punctuation.terminator.tikz
+  16  \end{tikzpicture}

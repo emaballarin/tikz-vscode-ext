@@ -1,0 +1,250 @@
+   1  % calc coordinates: ($...$) is coordinate arithmetic, not maths. Every dollar here is a
+   2  % delimiter TikZ requires, and none of them opens a formula. The last two lines are the
+   3  % control: real maths, which must still come out as a string.
+   4  \begin{tikzpicture}
+   5    \draw [colorgrey, opacity=.85, line width=.6pt]
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "colorgrey"              support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "opacity"                entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        ".85"                    constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "line width"             entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        ".6"                     constant.numeric.dimension.tikz
+        "pt"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "]"                      punctuation.section.options.end.tikz
+   6      ($(bbus)+(-1mm,-1.5mm)$) -- ($(bbus)+(1mm,1.5mm)$);
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "bbus"                   meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "-1"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz
+        "mm"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "-1.5"                   meta.coordinate.calc.tikz constant.numeric.dimension.tikz
+        "mm"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "bbus"                   meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "1"                      meta.coordinate.calc.tikz constant.numeric.dimension.tikz
+        "mm"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "1.5"                    meta.coordinate.calc.tikz constant.numeric.dimension.tikz
+        "mm"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   7    \node [arg, anchor=south] at ($(bbus)+(0,1.5mm)$) {\(\cK\)};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "arg"                    support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "anchor"                 entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "south"                  support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "at"                     keyword.control.path.tikz
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "bbus"                   meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "0"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "1.5"                    meta.coordinate.calc.tikz constant.numeric.dimension.tikz
+        "mm"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "\\cK"                   string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        ";"                      punctuation.terminator.tikz
+   8    \node at ($(a)!.5!(b)$) {partway};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "!"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        ".5"                     meta.coordinate.calc.tikz constant.numeric.tikz
+        "!"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "b"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   9    \node at ($(a)!.5!90:(b)$) {partway, rotated};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "!"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        ".5"                     meta.coordinate.calc.tikz constant.numeric.tikz
+        "!"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "90"                     meta.coordinate.calc.tikz constant.numeric.tikz
+        ":"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "b"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        ","                      punctuation.separator.tikz
+        ";"                      punctuation.terminator.tikz
+  10    \draw ($(a)+(1,0)$) circle (2pt);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "1"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "0"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "circle"                 keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.dimension.tikz
+        "pt"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  11    \draw ($2*(a)-(b)/3$) -- ($(a)+(\dx,0)$);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "2"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        "*"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "-"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "b"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "/"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "3"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "\\"                     meta.coordinate.calc.tikz support.function.general.tex punctuation.definition.function.tex
+        "dx"                     meta.coordinate.calc.tikz support.function.general.tex
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "0"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  12    \draw ($($(a)+(b)$)+(0,1)$) -- (c);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "($"                     meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "b"                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "0"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "1"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "c"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  13    \node [label={[shift={($(a)+(0,2mm)$)}]above:$y$}] at (0,0) {};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "label"                  entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "{"                      punctuation.section.group.begin.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "shift"                  entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "{"                      punctuation.section.group.begin.tikz
+        "($"                     punctuation.section.coordinate.begin.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "a"                      meta.coordinate.calc.tikz variable.other.coordinate.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "+"                      meta.coordinate.calc.tikz keyword.operator.calc.tikz
+        "("                      meta.coordinate.calc.tikz punctuation.section.coordinate.begin.tikz
+        "0"                      meta.coordinate.calc.tikz constant.numeric.tikz
+        ","                      meta.coordinate.calc.tikz punctuation.separator.tikz
+        "2"                      meta.coordinate.calc.tikz constant.numeric.dimension.tikz
+        "mm"                     meta.coordinate.calc.tikz constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      meta.coordinate.calc.tikz punctuation.section.coordinate.end.tikz
+        "$)"                     punctuation.section.coordinate.end.tikz
+        "}"                      punctuation.section.group.end.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "above"                  support.function.tikz entity.name.function.tikz
+        "$"                      string.other.math.tikz punctuation.definition.string.begin.tikz
+        "y"                      string.other.math.tikz
+        "$"                      string.other.math.tikz punctuation.definition.string.end.tikz
+        "}"                      punctuation.section.group.end.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  14    \node at (1,1) {$x^2$};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "$"                      string.other.math.tikz punctuation.definition.string.begin.tikz
+        "x^2"                    string.other.math.tikz
+        "$"                      string.other.math.tikz punctuation.definition.string.end.tikz
+        ";"                      punctuation.terminator.tikz
+  15    \node at (2,2) {\(\alpha\)};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "\\("                    string.other.math.tikz punctuation.definition.string.begin.tikz
+        "\\alpha"                string.other.math.tikz
+        "\\)"                    string.other.math.tikz punctuation.definition.string.end.tikz
+        ";"                      punctuation.terminator.tikz
+  16  \end{tikzpicture}

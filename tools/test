@@ -1,0 +1,17 @@
+#!/bin/sh
+# Run every check in the repo.
+#
+# The grammar tests need VS Code itself, since they run its own TextMate engine: tools/tm
+# finds an installation, or $VSCODE names one. Everything else runs under any node, and
+# with none installed, under the one inside VS Code.
+set -e
+
+cd "$(dirname "$0")/.."
+
+if command -v node >/dev/null 2>&1; then
+  RUN() { node "$@"; }
+else
+  RUN() { ./tools/tm "$@"; }
+fi
+
+./tools/tm tools/test-grammar.mjs

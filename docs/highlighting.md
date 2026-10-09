@@ -48,6 +48,8 @@ Two tools run the real VS Code TextMate engine, so what they print is exactly wh
 
 `audit.mjs` catches the main way a grammar like this goes wrong: a `begin`/`end` rule whose end never matches swallows the rest of the file. Point it at a few hundred real figures after any change to a `begin`/`end` rule.
 
+`./tools/test` holds the grammar to what it produced last: every fixture in `test/` is tokenised and compared with the `.scopes` file beside it. Only the scopes this grammar assigns are recorded, merged over runs of text, so a new VS Code fails it only where it changes TikZ highlighting, not where the stock LaTeX grammar merely splits its tokens differently. After a deliberate change, re-record with `./tools/tm tools/test-grammar.mjs --update` and read the diff of the `.scopes` files: that diff is the change, as the editor will show it.
+
 `test/spacing.tex` is the regression case for the spacing rule, and its first node is the control: spacing _inside_ a formula must stay part of the one flat string, which the `-string` negation is what guarantees.
 
 `test/calc.tex` is the regression case for calc coordinates: every dollar in it is a delimiter, and the last lines are the control — real maths, which must still come out as `string.other.math.tikz`.

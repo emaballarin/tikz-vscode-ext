@@ -1,0 +1,9 @@
+   1  \begin{itemize}
+   2  \item a
+   3  \end{itemize}
+   4  \begin{foobar}
+   5  x
+   6  \end{foobar}
+   7  \begin{tikzpicture}
+   8  y
+   9  \end{tikzpicture}

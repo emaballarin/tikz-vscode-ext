@@ -1,0 +1,69 @@
+   1  % TikZ outside a picture: preamble style definitions and inline one-liners.
+   2  \tikzset{
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "tikzset"                support.function.general.tex
+        "{"                      punctuation.section.options.begin.tikz
+   3    neuron/.style={circle, draw, minimum size=6mm},
+        "neuron"                 entity.name.function.style.tikz entity.name.function.tikz
+        "/."                     punctuation.definition.handler.tikz
+        "style"                  keyword.other.handler.tikz
+        "{"                      punctuation.section.group.begin.tikz
+        "circle"                 support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "draw"                   support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "minimum size"           entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "6"                      constant.numeric.dimension.tikz
+        "mm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "}"                      punctuation.section.group.end.tikz
+        ","                      punctuation.separator.tikz
+   4    every node/.append style={font=\small},
+        "every node"             entity.name.function.style.tikz entity.name.function.tikz
+        "/."                     punctuation.definition.handler.tikz
+        "append style"           keyword.other.handler.tikz
+        "{"                      punctuation.section.group.begin.tikz
+        "font"                   entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "small"                  support.function.general.tex
+        "}"                      punctuation.section.group.end.tikz
+        ","                      punctuation.separator.tikz
+   5  }
+        "}"                      punctuation.section.options.end.tikz
+   6  Text with an inline \tikz \draw [red] (0,0) -- (1em,0); picture.
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "tikz"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "red"                    support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "em"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+   7  Prose that merely mentions a circle to the left, or a node at noon, is left alone.
+   8  \pgfkeys{/tikz/.cd, flow/.style={->, >=stealth}}
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "pgfkeys"                support.function.general.tex
+        "{"                      punctuation.section.options.begin.tikz
+        "tikz"                   support.function.tikz entity.name.function.tikz
+        "cd"                     support.function.tikz entity.name.function.tikz
+        ","                      punctuation.separator.tikz
+        "flow"                   entity.name.function.style.tikz entity.name.function.tikz
+        "/."                     punctuation.definition.handler.tikz
+        "style"                  keyword.other.handler.tikz
+        "{"                      punctuation.section.group.begin.tikz
+        "->"                     keyword.operator.arrow.tikz
+        ","                      punctuation.separator.tikz
+        "stealth"                keyword.operator.arrow.tikz
+        "}"                      punctuation.section.group.end.tikz
+        "}"                      punctuation.section.options.end.tikz

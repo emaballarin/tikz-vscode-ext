@@ -96,3 +96,29 @@ export async function grammarFor(reg, file) {
     if (!grammar) throw new Error(`could not load ${root}`);
     return grammar;
 }
+
+/**
+ * Every scope name this extension's grammars can assign, as written in their rules. Some
+ * are borrowed from the host on purpose -- a macro inside an option list is scoped as the
+ * host scopes one outside it -- and those count as ours too: we put them there.
+ * @returns {Set<string>}
+ */
+export function ourScopes() {
+    const names = new Set();
+    const walk = (node) => {
+        if (Array.isArray(node)) return node.forEach(walk);
+        if (!node || typeof node !== "object") return;
+        for (const [key, value] of Object.entries(node)) {
+            if ((key === "name" || key === "contentName") && typeof value === "string") {
+                for (const scope of value.split(/\s+/)) if (scope) names.add(scope);
+            } else walk(value);
+        }
+    };
+    for (const file of Object.values(OURS)) {
+        const grammar = JSON.parse(fs.readFileSync(file, "utf8"));
+        // Only the rules: a grammar's top-level "name" is its display name, not a scope.
+        walk(grammar.patterns);
+        walk(grammar.repository);
+    }
+    return names;
+}
