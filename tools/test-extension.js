@@ -305,6 +305,31 @@ test("a file the watcher reports deleted leaves the index", async () => {
     index.dispose();
 });
 
+test("rebuilding the index forgets a file that is gone, even with no watcher event for it", async () => {
+    // VS Code documents that deleting a folder may report the folder alone, not the files
+    // in it -- so the watcher never says, and Rebuild is the only way back.
+    const root = folder({ "pre.tex": "\\tikzset{neuron/.style={draw}}", "old/a.tex": "\\tikzset{gone/.style={red}}" });
+    state.found = [path.join(root, "pre.tex"), path.join(root, "old", "a.tex")];
+    const index = new StyleIndex();
+    await index.refreshAll();
+    fs.rmSync(path.join(root, "old"), { recursive: true });
+    state.found = [path.join(root, "pre.tex")];
+    await index.refreshAll();
+    assert.deepStrictEqual([...index.names], ["neuron"]);
+});
+
+test("disposing the index lets go of everything it subscribed to", async () => {
+    const index = new StyleIndex();
+    await index.start();
+    assert.strictEqual(state.saveListeners.length, 1);
+    index.dispose();
+    assert.strictEqual(state.saveListeners.length, 0, "the save listener outlived the index");
+    assert.ok(
+        state.watchers.every((w) => w.disposed),
+        "a watcher outlived the index"
+    );
+});
+
 // --- build ------------------------------------------------------------------------------
 
 /** Run the build command against `root` with `active` open, and return what it said. */

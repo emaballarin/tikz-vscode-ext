@@ -23,6 +23,7 @@ class StyleIndex {
         /** Fires when the set of known style names changes. */
         this.onDidChange = this._onDidChange.event;
         this._watcher = undefined;
+        this._saveListener = undefined;
     }
 
     /** @returns {Set<string>} every style name currently known */
@@ -54,16 +55,24 @@ class StyleIndex {
         });
 
         // The watcher does not fire for an unsaved buffer, so pick up edits on save too.
-        vscode.workspace.onDidSaveTextDocument((doc) => {
+        this._saveListener = vscode.workspace.onDidSaveTextDocument((doc) => {
             if (/\.(tex|sty|cls|tikz)$/.test(doc.fileName)) {
                 this._ingest(doc.fileName, doc.getText());
             }
         });
     }
 
+    /**
+     * Re-scan the workspace from nothing. Reading into the existing map kept every file it
+     * had ever seen, so a file gone without a watcher event -- VS Code may report a deleted
+     * folder and not the files in it -- stayed in the index through Rebuild, the command
+     * that exists to recover from exactly that.
+     */
     async refreshAll() {
         const uris = await vscode.workspace.findFiles(SOURCE_GLOB, "**/node_modules/**", MAX_FILES);
-        await Promise.all(uris.map((uri) => this._read(uri)));
+        const next = new Map();
+        await Promise.all(uris.map((uri) => this._read(uri, next)));
+        this._byFile = next;
         this._rebuildNames();
     }
 
@@ -73,14 +82,17 @@ class StyleIndex {
         this._rebuildNames();
     }
 
-    /** @param {vscode.Uri} uri */
-    async _read(uri) {
+    /**
+     * @param {vscode.Uri} uri
+     * @param {Map<string, Map<string, number>>} [into]
+     */
+    async _read(uri, into = this._byFile) {
         try {
             const bytes = await vscode.workspace.fs.readFile(uri);
-            this._byFile.set(uri.fsPath, collectStyleDefinitions(Buffer.from(bytes).toString("utf8")));
+            into.set(uri.fsPath, collectStyleDefinitions(Buffer.from(bytes).toString("utf8")));
         } catch {
             // A file that vanished or cannot be read simply contributes nothing.
-            this._byFile.delete(uri.fsPath);
+            into.delete(uri.fsPath);
         }
     }
 
@@ -106,6 +118,7 @@ class StyleIndex {
 
     dispose() {
         this._watcher?.dispose();
+        this._saveListener?.dispose();
         this._onDidChange.dispose();
     }
 }
