@@ -66,6 +66,11 @@ async function build(context) {
         return;
     }
 
+    // The status file is the script's report on this run. One left by an earlier run would
+    // otherwise answer for a script that stops before writing its own, or never writes one,
+    // when the exit code is meant to decide.
+    await clearStatus(plan.cwd);
+
     const started = Date.now();
     const result = await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Window, title: `${plan.label}…` },
@@ -201,6 +206,20 @@ async function exists(file) {
     }
 }
 
+/** @param {string} cwd */
+function statusUri(cwd) {
+    return vscode.Uri.file(path.join(cwd, "build", ".build-status"));
+}
+
+/** @param {string} cwd */
+async function clearStatus(cwd) {
+    try {
+        await vscode.workspace.fs.delete(statusUri(cwd));
+    } catch {
+        // None there yet.
+    }
+}
+
 /**
  * The scripts leave a one-line summary behind, since their output is not shown anywhere.
  * @param {string} cwd
@@ -208,8 +227,7 @@ async function exists(file) {
  */
 async function readStatus(cwd) {
     try {
-        const uri = vscode.Uri.file(path.join(cwd, "build", ".build-status"));
-        const text = Buffer.from(await vscode.workspace.fs.readFile(uri))
+        const text = Buffer.from(await vscode.workspace.fs.readFile(statusUri(cwd)))
             .toString("utf8")
             .trim();
         const [verdict, ...rest] = text.split(/\s+/);

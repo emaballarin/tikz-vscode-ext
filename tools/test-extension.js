@@ -349,6 +349,16 @@ test("without a status file the exit code decides", async () => {
     assert.deepStrictEqual(messages, [["error", "build failed (exit 3)"]]);
 });
 
+test("a verdict left by an earlier run does not answer for this one", async () => {
+    // The README promises the exit code decides when the script writes no status; a file
+    // from the last run was read as this run's instead, turning a success into a failure.
+    const root = folder({ "build.sh": script("exit 0"), "build/.build-status": "fail see build/main.log\n" });
+    const messages = await runBuild(root);
+    assert.strictEqual(messages.length, 1, JSON.stringify(messages));
+    assert.deepStrictEqual(messages[0][0], "info", JSON.stringify(messages));
+    assert.match(messages[0][1], /^Built build in /);
+});
+
 test("a script that prints more than a pipe holds still runs to the end", async () => {
     // execFile buffered the output and killed the script past a megabyte; latexmk on a
     // whole document, left on the terminal by a script that does not redirect it, is that.
