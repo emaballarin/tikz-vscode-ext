@@ -198,6 +198,44 @@ def _():
             raise AssertionError("the packaged README lost its image instead of pinning it")
 
 
+@test("tools/package leaves out what .gitignore leaves out, and the VS Code CI downloads")
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        for junk in ("node_modules/x/index.js", ".DS_Store", "src/.DS_Store", ".vscode-test/stable/code"):
+            (tree / junk).parent.mkdir(parents=True, exist_ok=True)
+            (tree / junk).write_text("junk")
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            shipped = [n for n in archive.namelist() if any(j in n for j in ("node_modules", ".DS_Store", ".vscode-test"))]
+        assert not shipped, f"shipped {shipped}"
+
+
+@test("tools/package decodes the manifest as JSON and writes it as XML")
+def _():
+    # A sed capture copies `\\` where package.json means one backslash, and an `&` or a `<`
+    # copied raw makes the vsixmanifest ill-formed, which the installer rejects silently.
+    awkward = "Draw <figures> & \\paths \"quoted\""
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        edit_json(tree / "package.json", lambda m: m.update(description=awkward, displayName="TikZ & co"))
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            document = ElementTree.fromstring(archive.read("extension.vsixmanifest"))
+        assert document.find(".//v:Description", NAMESPACE).text == awkward
+        assert document.find(".//v:DisplayName", NAMESPACE).text == "TikZ & co"
+
+
+@test("tools/package builds from a tree with no git history, dropping the image it cannot pin")
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree", git=False)
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            readme = archive.read("extension/README.md").decode("utf-8")
+        assert "](images/" not in readme, "a relative image would draw as a broken tile"
+
+
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"

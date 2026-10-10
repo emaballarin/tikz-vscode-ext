@@ -1,5 +1,6 @@
 #!/bin/sh
-# Package the extension as a .vsix, with nothing but tar and zip.
+# Package the extension as a .vsix, with nothing but tar, zip, and the python3 that
+# tools/check already needs.
 #
 # Dropping a folder into ~/.vscode/extensions is no longer enough: VS Code takes
 # extensions.json there as the source of truth and marks anything else obsolete at
@@ -8,24 +9,46 @@
 set -e
 
 cd "$(dirname "$0")/.."
-field() { sed -n "s/.*\"$1\": \"\([^\"]*\)\".*/\1/p" package.json | head -1; }
 # In place, without sed -i: BSD sed wants `-i ''` and GNU sed reads that '' as the script.
 edit() { sed "$1" "$2" > "$2.tmp" && mv "$2.tmp" "$2"; }
 
-name=$(field name)
-publisher=$(field publisher)
-version=$(field version)
-display=$(field displayName)
-summary=$(field description)
-icon=$(field icon)
-engine=$(sed -n 's/.*"vscode": "\([^"]*\)".*/\1/p' package.json | head -1)
+# python3 rather than a sed capture, because the fields cross two encodings. They are JSON,
+# so their escapes have to be decoded: a raw capture ships `\\` where package.json means
+# one backslash. And they land in XML, so their metacharacters have to be escaped: an `&`
+# or a `<` in the display name makes the manifest ill-formed, and the installer rejects it
+# without saying why. A capture also took the first line that looked like the key, which
+# held only while each key happened to come first at the top level.
+fields=$(python3 - <<'PY'
+import json
+from shlex import quote
+from xml.sax.saxutils import escape
+
+manifest = json.load(open("package.json", encoding="utf-8"))
+# Only the free-text fields need escaping; the rest are identifiers, a path and a semver
+# range, which the marketplace grammar already confines to characters XML does not mind.
+for key, value in (
+    ("name", manifest["name"]),
+    ("publisher", manifest["publisher"]),
+    ("version", manifest["version"]),
+    ("icon", manifest["icon"]),
+    ("engine", manifest["engines"]["vscode"]),
+    ("display", escape(manifest["displayName"])),
+    ("summary", escape(manifest["description"])),
+):
+    print(f"{key}={quote(value)}")
+PY
+)
+eval "$fields"
 
 out="$PWD/$name-$version.vsix"
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 
 mkdir -p "$stage/extension"
-tar -cf - --exclude=.git --exclude='*.vsix' --exclude=__pycache__ . | (cd "$stage/extension" && tar -xf -)
+# What .gitignore leaves out stays out, and so does the VS Code that CI downloads to test
+# the grammar against, which would otherwise ship inside the vsix.
+tar -cf - --exclude=.git --exclude=node_modules --exclude=.DS_Store --exclude='*.vsix' \
+  --exclude=__pycache__ --exclude=.vscode-test . | (cd "$stage/extension" && tar -xf -)
 
 # The extension editor sanitises a README down to http(s) image sources -- a relative
 # path draws a broken tile, and so does a data: URI with the image inside it. So the
@@ -35,7 +58,9 @@ tar -cf - --exclude=.git --exclude='*.vsix' --exclude=__pycache__ . | (cd "$stag
 # keeps its relative paths, which is what GitHub renders.
 slug=$(git config --get remote.origin.url | sed -e 's|.*[:/]\([^/]*/[^/]*\)$|\1|' -e 's|\.git$||')
 for img in $(sed -n 's/.*](\(images\/[^)]*\)).*/\1/p' README.md | sort -u); do
-  sha=$(git log -1 --format=%H -- "$img")
+  # Outside a git checkout -- a downloaded source tree -- there is nothing to pin to, and
+  # the image is dropped below rather than shipped as a broken tile.
+  sha=$(git log -1 --format=%H -- "$img" 2>/dev/null || true)
   if [ -n "$slug" ] && [ -n "$sha" ]; then
     [ -n "$(git status --porcelain -- "$img")" ] &&
       echo "warning: $img has uncommitted changes; the packaged README will point at the committed one" >&2
