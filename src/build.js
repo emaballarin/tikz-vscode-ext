@@ -112,7 +112,12 @@ async function askForScript(context) {
 /**
  * Decide which script to run, and from where.
  * @param {vscode.Uri} folder
- * @returns {Promise<{script: string, args: string[], cwd: string, label: string} | null>}
+ *
+ * Each script is resolved against its folder once, and that path is both checked and run.
+ * Joining it on instead turned an absolute setting into a path inside the folder, so it
+ * was never found; and running the bare setting let `build.sh`, written without ./, be
+ * looked up on the PATH after it had been found in the folder.
+ * @returns {Promise<{script: string, file: string, args: string[], cwd: string, label: string} | null>}
  */
 async function choose(folder) {
     const { figureScript, buildScript, scriptFolders, figureFolders } = config();
@@ -121,16 +126,19 @@ async function choose(folder) {
 
     for (const dir of scriptFolders) {
         const cwd = path.join(folder.fsPath, dir);
-        if (figure && (await exists(path.join(cwd, figureScript)))) {
+        const figureFile = path.resolve(cwd, figureScript);
+        if (figure && (await exists(figureFile))) {
             return {
                 script: figureScript,
+                file: figureFile,
                 args: [figure.uri.fsPath],
                 cwd,
                 label: `preview ${path.basename(figure.uri.fsPath, ".tex")}`,
             };
         }
-        if (await exists(path.join(cwd, buildScript))) {
-            return { script: buildScript, args: [], cwd, label: "build" };
+        const buildFile = path.resolve(cwd, buildScript);
+        if (await exists(buildFile)) {
+            return { script: buildScript, file: buildFile, args: [], cwd, label: "build" };
         }
     }
     return null;
@@ -156,12 +164,12 @@ function activeFigure(figureFolders) {
  * spawn rather than execFile, which buffers the output and kills the script once that
  * passes a megabyte -- so a script leaving latexmk's output on the terminal was stopped
  * halfway through a build. Nothing here shows the output, so none is collected.
- * @param {{script: string, args: string[], cwd: string}} plan
+ * @param {{file: string, args: string[], cwd: string}} plan
  * @returns {Promise<{code: number | null, signal: string | null, error: Error | null, timedOut: boolean}>}
  */
 function run(plan) {
     return new Promise((resolve) => {
-        const child = spawn(plan.script, plan.args, { cwd: plan.cwd, stdio: "ignore" });
+        const child = spawn(plan.file, plan.args, { cwd: plan.cwd, stdio: "ignore" });
         let timedOut = false;
         const timer = setTimeout(() => {
             timedOut = true;
@@ -267,7 +275,7 @@ async function view() {
 
     let pdf = null;
     for (const dir of scriptFolders) {
-        const candidate = path.join(folder.uri.fsPath, dir, relative);
+        const candidate = path.resolve(folder.uri.fsPath, dir, relative);
         if (await exists(candidate)) {
             pdf = candidate;
             break;

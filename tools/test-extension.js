@@ -337,6 +337,20 @@ test("anything else runs the build script, with no arguments", async () => {
     assert.match(messages[0][1], /^Built build in /);
 });
 
+test("a script given by absolute path is found there", async () => {
+    const elsewhere = folder({ "build.sh": script('echo ran > "$(dirname "$0")/ran"') });
+    state.settings.buildScript = path.join(elsewhere, "build.sh");
+    const messages = await runBuild(folder({}));
+    assert.ok(fs.existsSync(path.join(elsewhere, "ran")), JSON.stringify(messages));
+});
+
+test("a script named without ./ is the one in the script folder, not one on the PATH", async () => {
+    const root = folder({ "build.sh": script("echo ran > ran") });
+    state.settings.buildScript = "build.sh";
+    const messages = await runBuild(root);
+    assert.ok(fs.existsSync(path.join(root, "ran")), JSON.stringify(messages));
+});
+
 test("a fail line in the status file is reported, whatever the exit code", async () => {
     const root = folder({ "build.sh": script('mkdir -p build; echo "fail see build/main.log" > build/.build-status') });
     const messages = await runBuild(root);
