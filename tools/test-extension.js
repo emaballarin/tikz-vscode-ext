@@ -349,6 +349,33 @@ test("without a status file the exit code decides", async () => {
     assert.deepStrictEqual(messages, [["error", "build failed (exit 3)"]]);
 });
 
+test("a script that prints more than a pipe holds still runs to the end", async () => {
+    // execFile buffered the output and killed the script past a megabyte; latexmk on a
+    // whole document, left on the terminal by a script that does not redirect it, is that.
+    const root = folder({
+        "build.sh": script(
+            'head -c 2000000 /dev/zero | tr "\\0" x; mkdir -p build; echo "ok main.tex" > build/.build-status'
+        ),
+    });
+    const messages = await runBuild(root);
+    assert.strictEqual(messages.length, 1, JSON.stringify(messages));
+    assert.match(messages[0][1], /^Built main\.tex in /);
+});
+
+test("a script that cannot be executed is named, with the fix", async () => {
+    const root = folder({ "build.sh": "#!/bin/sh\nexit 0\n" });
+    const messages = await runBuild(root);
+    assert.deepStrictEqual(messages, [
+        ["error", "TikZ: ./build.sh is not executable — chmod +x it, then build again."],
+    ]);
+});
+
+test("a script stopped by a signal says so rather than quoting an exit code", async () => {
+    const root = folder({ "build.sh": script("kill -TERM $$") });
+    const messages = await runBuild(root);
+    assert.deepStrictEqual(messages, [["error", "build was stopped by SIGTERM"]]);
+});
+
 test("with no script anywhere, the build asks for one and can show the example", async () => {
     const root = folder({});
     state.answer = "Show example";

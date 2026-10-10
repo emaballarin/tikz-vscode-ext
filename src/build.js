@@ -1,7 +1,7 @@
 "use strict";
 
 const vscode = require("vscode");
-const { execFile, spawn } = require("node:child_process");
+const { spawn } = require("node:child_process");
 const path = require("node:path");
 
 const TIMEOUT_MS = 10 * 60 * 1000;
@@ -74,10 +74,11 @@ async function build(context) {
     const seconds = ((Date.now() - started) / 1000).toFixed(1);
 
     const status = await readStatus(plan.cwd);
+    const failed = failure(plan, result);
     if (status && !status.ok) {
         vscode.window.showErrorMessage(`Build failed — ${status.message}`);
-    } else if (result.code !== 0) {
-        vscode.window.showErrorMessage(`${plan.label} failed (exit ${result.code})`);
+    } else if (failed) {
+        vscode.window.showErrorMessage(failed);
     } else {
         const what = status?.message ?? plan.label;
         vscode.window.showInformationMessage(`Built ${what} in ${seconds}s`);
@@ -144,13 +145,50 @@ function activeFigure(figureFolders) {
     return isFigure ? active : null;
 }
 
-/** @param {{script: string, args: string[], cwd: string}} plan */
+/**
+ * Run the script to the end, discarding what it prints.
+ *
+ * spawn rather than execFile, which buffers the output and kills the script once that
+ * passes a megabyte -- so a script leaving latexmk's output on the terminal was stopped
+ * halfway through a build. Nothing here shows the output, so none is collected.
+ * @param {{script: string, args: string[], cwd: string}} plan
+ * @returns {Promise<{code: number | null, signal: string | null, error: Error | null, timedOut: boolean}>}
+ */
 function run(plan) {
     return new Promise((resolve) => {
-        execFile(plan.script, plan.args, { cwd: plan.cwd, timeout: TIMEOUT_MS }, (error) =>
-            resolve({ code: error ? (error.code ?? 1) : 0 })
-        );
+        const child = spawn(plan.script, plan.args, { cwd: plan.cwd, stdio: "ignore" });
+        let timedOut = false;
+        const timer = setTimeout(() => {
+            timedOut = true;
+            child.kill();
+        }, TIMEOUT_MS);
+        // A script that cannot start raises "error" and may never raise "exit"; the
+        // first of the two settles the promise.
+        child.on("error", (error) => {
+            clearTimeout(timer);
+            resolve({ code: null, signal: null, error, timedOut });
+        });
+        child.on("exit", (code, signal) => {
+            clearTimeout(timer);
+            resolve({ code, signal, error: null, timedOut });
+        });
     });
+}
+
+/**
+ * What went wrong running the script, said in terms of what to do about it, or null when
+ * it exited 0. A spawn failure has no exit code at all, and quoting its error code as one
+ * ("exit EACCES") told nobody that the script had merely lost its executable bit.
+ * @param {{script: string, label: string}} plan
+ * @param {Awaited<ReturnType<typeof run>>} result
+ */
+function failure(plan, { code, signal, error, timedOut }) {
+    if (error?.code === "EACCES") return `TikZ: ${plan.script} is not executable — chmod +x it, then build again.`;
+    if (error) return `TikZ: could not run ${plan.script} — ${error.message}`;
+    if (timedOut) return `${plan.label} timed out after ${TIMEOUT_MS / 60000} minutes`;
+    if (signal) return `${plan.label} was stopped by ${signal}`;
+    if (code !== 0) return `${plan.label} failed (exit ${code})`;
+    return null;
 }
 
 /** @param {string} file */
