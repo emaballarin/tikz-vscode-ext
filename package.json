@@ -80,7 +80,7 @@
                 "tikz.viewer": {
                     "type": "string",
                     "default": "",
-                    "description": "Application to show the PDF in. Empty means the newest /Applications/texstudio*.app, since the bundle is renamed on every upgrade."
+                    "description": "Application to show the PDF in. Empty means TeXstudio: the newest /Applications/texstudio*.app on macOS, since the bundle is renamed on every upgrade, and the texstudio on the PATH on Linux."
                 },
                 "tikz.scriptFolders": {
                     "type": "array",

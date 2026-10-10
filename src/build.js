@@ -2,6 +2,7 @@
 
 const vscode = require("vscode");
 const { spawn } = require("node:child_process");
+const fs = require("node:fs");
 const path = require("node:path");
 
 const TIMEOUT_MS = 10 * 60 * 1000;
@@ -332,21 +333,44 @@ async function executable(app) {
 }
 
 /**
- * The bundle carries its version in its name, and so is renamed on every upgrade;
- * hardcoding a path would break at the next one. Newest by name wins.
+ * The TeXstudio to hand the PDF to when tikz.viewer is empty.
+ *
+ * On macOS the bundle carries its version in its name, and so is renamed on every
+ * upgrade; hardcoding a path would break at the next one. The newest by version wins,
+ * compared number by number -- by plain string order texstudio-4.8.9 sorts after
+ * texstudio-4.8.10. On Linux the packages put a texstudio on the PATH.
  */
 async function findTeXstudio() {
+    if (process.platform === "linux") return onPath("texstudio");
     if (process.platform !== "darwin") return null;
     try {
         const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file("/Applications"));
         const apps = entries
             .map(([name]) => name)
             .filter((name) => /^texstudio.*\.app$/i.test(name))
-            .sort();
+            .sort((a, b) => a.localeCompare(b, "en", { numeric: true, sensitivity: "base" }));
         return apps.length ? path.join("/Applications", apps[apps.length - 1]) : null;
     } catch {
         return null;
     }
+}
+
+/**
+ * The first executable called `name` on the PATH, as a shell would find it.
+ * @param {string} name
+ */
+async function onPath(name) {
+    for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
+        if (!dir) continue;
+        const candidate = path.join(dir, name);
+        try {
+            await fs.promises.access(candidate, fs.constants.X_OK);
+            return candidate;
+        } catch {
+            // Not here.
+        }
+    }
+    return null;
 }
 
 module.exports = { runBuildAndReport, viewAndReport };

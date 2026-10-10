@@ -66,6 +66,9 @@ class SemanticTokensBuilder {
 
 const uri = (fsPath) => ({ fsPath, scheme: "file", toString: () => `file://${fsPath}` });
 
+/** /Applications, or the folder a test stands in for it. */
+const applications = (p) => (state.applications ? p.replace(/^\/Applications(?=\/|$)/, state.applications) : p);
+
 /** Mutable state the stub reads; reset() puts it back before every test. */
 const state = {};
 function reset() {
@@ -85,6 +88,7 @@ function reset() {
     state.providers = [];
     state.commands = new Map();
     state.opened = [];
+    state.applications = null;
 }
 
 const vscode = {
@@ -107,7 +111,7 @@ const vscode = {
             stat: async (u) => fs.promises.stat(u.fsPath),
             readFile: async (u) => new Uint8Array(await fs.promises.readFile(u.fsPath)),
             readDirectory: async (u) =>
-                (await fs.promises.readdir(u.fsPath, { withFileTypes: true })).map((d) => [
+                (await fs.promises.readdir(applications(u.fsPath), { withFileTypes: true })).map((d) => [
                     d.name,
                     d.isDirectory() ? 2 : 1,
                 ]),
@@ -420,6 +424,58 @@ test("view hands the PDF for the active file to the configured viewer", async ()
     for (let i = 0; i < 50 && !fs.existsSync(viewed); i++) await new Promise((r) => setTimeout(r, 20));
     assert.strictEqual(fs.readFileSync(viewed, "utf8").trim(), path.join(root, "build", "main.pdf"));
     assert.deepStrictEqual(state.messages, []);
+});
+
+/** Run `body` as if on `platform`, with `env` over the environment, restoring both after. */
+async function on(platform, env, body) {
+    const real = process.platform;
+    const saved = Object.fromEntries(Object.keys(env).map((key) => [key, process.env[key]]));
+    Object.defineProperty(process, "platform", { value: platform });
+    Object.assign(process.env, env);
+    try {
+        await body();
+    } finally {
+        Object.defineProperty(process, "platform", { value: real });
+        for (const [key, value] of Object.entries(saved)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    }
+}
+
+/** Wait for `predicate`, which the detached viewer satisfies a moment after it starts. */
+async function eventually(predicate) {
+    for (let i = 0; i < 100 && !predicate(); i++) await new Promise((r) => setTimeout(r, 20));
+}
+
+test("on macOS, with no viewer set, the newest TeXstudio by version is the one asked", async () => {
+    // By string order texstudio-4.8.9 sorts after texstudio-4.8.10.
+    const apps = folder({
+        "texstudio-4.8.9.app/Contents/MacOS/texstudio": "",
+        "texstudio-4.8.10.app/Contents/MacOS/texstudio": "",
+        "TextEdit.app/Contents/MacOS/TextEdit": "",
+    });
+    state.folders = [folder({ "build/main.pdf": "%PDF" })];
+    state.applications = apps;
+    await on("darwin", {}, async () => {
+        await build.viewAndReport();
+        // /Applications itself is not touched, so starting the binary fails, naming it.
+        await eventually(() => state.messages.length);
+    });
+    assert.strictEqual(state.messages.length, 1, JSON.stringify(state.messages));
+    assert.match(state.messages[0][1], /texstudio-4\.8\.10\.app\/Contents\/MacOS\/texstudio/);
+});
+
+test("on Linux, with no viewer set, the texstudio on the PATH is the one asked", async () => {
+    const bin = folder({ texstudio: script('echo "$1" > "$(dirname "$0")/viewed"') });
+    const root = folder({ "build/main.pdf": "%PDF" });
+    state.folders = [root];
+    await on("linux", { PATH: `${bin}${path.delimiter}${process.env.PATH}` }, async () => {
+        await build.viewAndReport();
+        await eventually(() => fs.existsSync(path.join(bin, "viewed")));
+    });
+    assert.deepStrictEqual(state.messages, []);
+    assert.strictEqual(fs.readFileSync(path.join(bin, "viewed"), "utf8").trim(), path.join(root, "build", "main.pdf"));
 });
 
 test("view says so when there is no PDF yet", async () => {

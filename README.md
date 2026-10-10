@@ -63,15 +63,15 @@ The scripts are looked for in each `tikz.scriptFolders` entry in turn and the fi
 
 ## Settings
 
-| Setting              | Default                                        |                                                                           |
-| -------------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| `tikz.figureScript`  | `./fig.sh`                                     | script for a figure                                                       |
-| `tikz.buildScript`   | `./build.sh`                                   | script for the document                                                   |
-| `tikz.figureFolders` | `(?:[A-Za-z0-9_]+-figs\|tikz-figs\|tikz-code)` | folder names holding figures                                              |
-| `tikz.scriptFolders` | `[".", "latex"]`                               | where the scripts and PDFs are, searched in order                         |
-| `tikz.figurePdf`     | `build/fig.pdf`                                | PDF to view from a figure                                                 |
-| `tikz.documentPdf`   | `build/main.pdf`                               | PDF to view otherwise                                                     |
-| `tikz.viewer`        | `""`                                           | viewer application; empty means the newest `/Applications/texstudio*.app` |
+| Setting              | Default                                        |                                                                                                                                   |
+| -------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `tikz.figureScript`  | `./fig.sh`                                     | script for a figure                                                                                                               |
+| `tikz.buildScript`   | `./build.sh`                                   | script for the document                                                                                                           |
+| `tikz.figureFolders` | `(?:[A-Za-z0-9_]+-figs\|tikz-figs\|tikz-code)` | folder names holding figures                                                                                                      |
+| `tikz.scriptFolders` | `[".", "latex"]`                               | where the scripts and PDFs are, searched in order                                                                                 |
+| `tikz.figurePdf`     | `build/fig.pdf`                                | PDF to view from a figure                                                                                                         |
+| `tikz.documentPdf`   | `build/main.pdf`                               | PDF to view otherwise                                                                                                             |
+| `tikz.viewer`        | `""`                                           | viewer application; empty means TeXstudio: the newest `/Applications/texstudio*.app` on macOS, `texstudio` on the `PATH` on Linux |
 
 ## Licence
 
