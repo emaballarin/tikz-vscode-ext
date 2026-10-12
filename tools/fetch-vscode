@@ -8,9 +8,7 @@
 # matters, and CI asks for the newest of each quality rather than a pinned build: Stable is
 # what people run today, Insiders what they will run next. The update service names the
 # build and its SHA-256, which is checked before anything is unpacked, and a build already
-# in place is not fetched again. Every request retries on any error, and a transfer that
-# stalls below 1 KB/s for a minute is abandoned and retried rather than waited on. Works on
-# Linux (x64, arm64) and macOS.
+# in place is not fetched again. Works on Linux (x64, arm64) and macOS.
 set -e
 
 quality=${1:?usage: fetch-vscode stable|insider}
@@ -29,11 +27,21 @@ esac
 cd "$(dirname "$0")/.."
 dest="$PWD/.vscode-test/$quality"
 
-latest=$(curl -fsSL --retry 3 --retry-delay 5 --retry-all-errors --speed-limit 1024 --speed-time 60 "https://update.code.visualstudio.com/api/update/$platform/$quality/latest" | python3 -c '
+# Every request retries on any error, gives up on a connection that does not open in 30
+# seconds, and on a transfer that stalls below 1 KB/s for a minute. Its answer goes to a
+# file, never a pipe: curl clears a failed attempt's partial output from a file before it
+# retries, but not from a pipe, where the two would arrive concatenated.
+fetch() { curl -fsSL --retry 3 --retry-delay 5 --retry-all-errors --connect-timeout 30 --speed-limit 1024 --speed-time 60 "$@"; }
+
+answer=$(mktemp)
+download=$(mktemp)
+trap 'rm -f "$answer" "$download"' EXIT
+fetch -o "$answer" "https://update.code.visualstudio.com/api/update/$platform/$quality/latest"
+latest=$(python3 -c '
 import json, sys
-build = json.load(sys.stdin)
+build = json.load(open(sys.argv[1]))
 print(build["url"], build["version"], build["sha256hash"], build["productVersion"])
-')
+' "$answer")
 read -r url commit sha256 version <<EOF
 $latest
 EOF
@@ -62,9 +70,7 @@ if [ -n "$app" ] && grep -q "\"commit\": *\"$commit\"" "$app"/Contents/Resources
 fi
 
 echo "fetch-vscode: downloading $quality $version ($commit) for $platform" >&2
-download=$(mktemp)
-trap 'rm -f "$download"' EXIT
-curl -fsSL --retry 3 --retry-delay 5 --retry-all-errors --speed-limit 1024 --speed-time 60 "$url" -o "$download"
+fetch -o "$download" "$url"
 python3 - "$download" "$sha256" <<'PY'
 import hashlib, sys
 path, expected = sys.argv[1:]

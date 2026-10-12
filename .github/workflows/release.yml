@@ -37,8 +37,9 @@ concurrency:
 jobs:
     build:
         runs-on: ubuntu-latest
-        # A run takes a few minutes; this only bounds one that hangs, well short of six hours.
-        timeout-minutes: 30
+        # A run takes a few minutes; this only bounds one that hangs, well short of six hours,
+        # with room for the canary's own ten on top of everything else.
+        timeout-minutes: 45
         steps:
             - uses: actions/checkout@v7
               with:
@@ -85,14 +86,19 @@ jobs:
                       echo '```'
                     } >> "$GITHUB_STEP_SUMMARY"
                   }
+                  # CANARY says how it went, for the summary; a step cut off by its limit never
+                  # writes it, and the summary says so.
                   if ! insider=$(./tools/fetch-vscode insider 2> "$log"); then
+                    echo "CANARY=not fetched" >> "$GITHUB_ENV"
                     warn "the latest Insiders could not be fetched" "The grammar was not checked against it. Stable passed, so this release is unaffected."
                     exit 0
                   fi
                   echo "VSCODE_INSIDER=$insider" >> "$GITHUB_ENV"
                   if VSCODE="$insider" ./tools/tm tools/test-grammar.mjs > "$log" 2>&1; then
+                    echo "CANARY=agrees" >> "$GITHUB_ENV"
                     cat "$log"
                   else
+                    echo "CANARY=differs" >> "$GITHUB_ENV"
                     warn "the next VS Code changes TikZ highlighting" "The latest Insiders tokenises the fixtures differently from what is recorded, or would not run them. Stable still agrees, so this release is unaffected; look before Insiders becomes Stable."
                   fi
 
@@ -178,17 +184,26 @@ jobs:
                   asset="tikz-vscode-ext-edge.vsix"
                   cp "${{ steps.package.outputs.path }}" "$asset"
                   # Delete and recreate rather than edit: the tag has to move to this commit.
-                  # Only a missing release is skipped; a delete that fails stops the step,
-                  # rather than leaving the old tag for the release below to reuse.
-                  if gh release view edge > /dev/null 2>&1; then
+                  # Only a release that is not there is skipped. Any other failure to look, or
+                  # to delete, stops the step: guessing "not there" would strip the tag from
+                  # under a live release below, and publish a second one beside it.
+                  if view=$(gh release view edge 2>&1); then
                     gh release delete edge --yes --cleanup-tag
+                  elif ! printf '%s\n' "$view" | grep -q 'release not found'; then
+                    printf '%s\n' "$view" >&2
+                    exit 1
                   fi
                   # A tag left without its release -- a cleanup that failed, a release deleted
                   # by hand -- would be reused by the create below, which ignores --target for
-                  # a tag that exists, and edge would stay on the old commit.
-                  if git ls-remote --exit-code --tags origin refs/tags/edge > /dev/null; then
-                    git push origin :refs/tags/edge
-                  fi
+                  # a tag that exists, and edge would stay on the old commit. ls-remote exits
+                  # 2 for no such tag; anything else but 0 is a failure to ask, not an answer.
+                  found=0
+                  git ls-remote --exit-code --tags origin refs/tags/edge > /dev/null || found=$?
+                  case "$found" in
+                    0) git push origin :refs/tags/edge ;;
+                    2) ;;
+                    *) echo "::error::could not ask the remote about the edge tag (exit $found)"; exit "$found" ;;
+                  esac
                   gh release create edge \
                     --prerelease \
                     --target "$GITHUB_SHA" \
@@ -238,5 +253,5 @@ jobs:
                     echo "| channel | ${{ steps.version.outputs.channel }} |"
                     echo "| commit | \`${GITHUB_SHA:0:7}\` |"
                     echo "| tested on | $(build "$VSCODE_STABLE") |"
-                    echo "| canary | $(build "$VSCODE_INSIDER") |"
+                    echo "| canary | $(build "$VSCODE_INSIDER") ${CANARY:-did not finish} |"
                   } >> "$GITHUB_STEP_SUMMARY"

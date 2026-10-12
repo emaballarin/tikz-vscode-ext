@@ -153,6 +153,7 @@ for (const [files, expected, what] of [
     [runaways.map((name) => path.join(RUNAWAY, name)), 1, "the runaways"],
     [fixtures(), 0, "the fixtures"],
     [[], 2, "no files"],
+    [[path.join(TEST, "no-such-file.tex")], 3, "a file that is not there"],
 ]) {
     const { status, stdout } = audit(files);
     // An exit of 1 is also what a crash looks like, so the runaways must be named too.

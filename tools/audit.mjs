@@ -8,7 +8,8 @@
 // clicking around in the editor would. A fragment ending inside its picture is normal --
 // it is \input into a parent -- so only *our* rules left open count; runawaySince in
 // tools/engine.mjs says how that is told apart. Exits 1 when anything runs away, 0 when
-// nothing does, and 2 when given no files to look at.
+// nothing does, 2 when given no files to look at, and 3 when it cannot finish -- a file
+// that will not read, say -- so a failure is never taken for a runaway.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -25,22 +26,27 @@ if (!files.length) {
 let flagged = 0;
 let totalOurs = 0;
 
-for (const file of files) {
-    const grammar = await grammarFor(reg, file);
-    let stack = INITIAL;
-    for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
-        const r = grammar.tokenizeLine(line, stack);
-        stack = r.ruleStack;
-        for (const t of r.tokens) if (t.scopes.some((s) => OURS.has(s))) totalOurs++;
-    }
+try {
+    for (const file of files) {
+        const grammar = await grammarFor(reg, file);
+        let stack = INITIAL;
+        for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+            const r = grammar.tokenizeLine(line, stack);
+            stack = r.ruleStack;
+            for (const t of r.tokens) if (t.scopes.some((s) => OURS.has(s))) totalOurs++;
+        }
 
-    const since = await runawaySince(file);
-    if (since !== null) {
-        flagged++;
-        console.log(
-            `\x1b[31mRUNAWAY\x1b[0m ${path.relative(process.cwd(), file)}  (a tikz rule opened by line ${since} is still open at EOF)`
-        );
+        const since = await runawaySince(file);
+        if (since !== null) {
+            flagged++;
+            console.log(
+                `\x1b[31mRUNAWAY\x1b[0m ${path.relative(process.cwd(), file)}  (a tikz rule opened by line ${since} is still open at EOF)`
+            );
+        }
     }
+} catch (error) {
+    console.error(`audit: ${error.message}`);
+    process.exit(3);
 }
 
 console.log(`\n${files.length} files, ${totalOurs} tikz tokens, \x1b[${flagged ? 31 : 32}m${flagged} runaway\x1b[0m`);
