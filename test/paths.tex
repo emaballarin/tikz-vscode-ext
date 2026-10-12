@@ -19,6 +19,14 @@
   \node {root} child {node {leaf}} child foreach \x in {1,2} {node {\x}};
   \draw decorate [decoration=zigzag] {(0,0) -- (1,0)} (2,0) svg {M 0 0 L 1 1};
   \path pic (p) at (0,0) {angle} graph {a -> b} foreach \x in {1,2} {(\x,0) circle (1pt)};
+  \draw (0,0) rectangle
+    (1,1) to
+    (2,2) ..
+    controls (3,3) .. (4,4);
+  \draw (0,0) -- (1,0) -- cycle (2,0) -- (3,0) -- cycle;
+  \draw decorate {(0,0) -- (1,1) -- cycle};
+  \node {\includegraphics{../plots/a.pdf}};
+  \node {wait.. what};
   \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
   \node {go to the store in town at noon};
   \node {a circle and a grid in a rectangle};

@@ -384,7 +384,101 @@
         "pt"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  22    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
+  22    \draw (0,0) rectangle
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "rectangle"              keyword.control.path.tikz
+  23      (1,1) to
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "to"                     keyword.control.path.tikz
+  24      (2,2) ..
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ".."                     keyword.operator.path.tikz
+  25      controls (3,3) .. (4,4);
+        "("                      punctuation.section.coordinate.begin.tikz
+        "3"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "3"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ".."                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "4"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "4"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  26    \draw (0,0) -- (1,0) -- cycle (2,0) -- (3,0) -- cycle;
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "cycle"                  keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "3"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "cycle"                  keyword.control.path.tikz
+        ";"                      punctuation.terminator.tikz
+  27    \draw decorate {(0,0) -- (1,1) -- cycle};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "decorate"               keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "cycle"                  keyword.control.path.tikz
+        ";"                      punctuation.terminator.tikz
+  28    \node {\includegraphics{../plots/a.pdf}};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "includegraphics"        support.function.general.tex
+        ";"                      punctuation.terminator.tikz
+  29    \node {wait.. what};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        ";"                      punctuation.terminator.tikz
+  30    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ","                      punctuation.separator.tikz
@@ -392,12 +486,12 @@
         ","                      punctuation.separator.tikz
         ","                      punctuation.separator.tikz
         ";"                      punctuation.terminator.tikz
-  23    \node {go to the store in town at noon};
+  31    \node {go to the store in town at noon};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  24    \node {a circle and a grid in a rectangle};
+  32    \node {a circle and a grid in a rectangle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  25  \end{tikzpicture}
+  33  \end{tikzpicture}

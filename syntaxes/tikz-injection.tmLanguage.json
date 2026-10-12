@@ -145,67 +145,67 @@
         },
 
         "path-join": {
-            "comment": "Path joins live outside option lists, between coordinates. A curve is written '.. controls (c) and (d) .. (y)', with or without the space after the dots, and the closing '..' is as much a join as the opening one. The dots are refused next to a third, so the '...' of a foreach list is not read as a curve.",
-            "match": "(--|(?<!\\.)\\.\\.(?:\\s*controls(?![\\w]))?(?!\\.)|\\|-|-\\|)",
+            "comment": "Path joins live outside option lists, between coordinates. A curve is written '.. controls (c) and (d) .. (y)', with or without the space after the dots, and the closing '..' is as much a join as the opening one. Two dots are claimed only before what the manual says follows them -- 'controls', then a coordinate, possibly relative, or 'cycle' -- or at the end of a line, so neither the '...' of a foreach list nor the '../' of a path in a label reads as a curve.",
+            "match": "(--|(?<!\\.)\\.\\.\\s*controls(?![\\w])|(?<!\\.)\\.\\.(?!\\.)(?=\\s*(?:[(+]|cycle(?![\\w])|$))|\\|-|-\\|)",
             "name": "keyword.operator.path.tikz"
         },
 
         "path-operator": {
-            "comment": "Most path operations are also English words, and node text is not excluded from this injection -- a label is host text inside the picture -- so a bare list of them coloured 'to' and 'in' in every label that used them. Each operation is therefore claimed only when it is followed by what the pgf manual says comes next: its options, a coordinate or a group, or a further keyword of its own syntax. A label that happens to read 'go to (a)' still lights up, which is the cost, and a small one. 'chain' is not a path operation at all -- 'start chain' is an option -- so it no longer appears.",
+            "comment": "Most path operations are also English words, and node text is not excluded from this injection -- a label is host text inside the picture -- so a bare list of them coloured 'to' and 'in' in every label that used them. Each operation is therefore claimed only when it is followed by what the pgf manual says comes next: its options, a coordinate or a group, or a further keyword of its own syntax -- or the end of the line, since a path often runs on to the next. A label that happens to read 'go to (a)' still lights up, which is the cost, and a small one. 'chain' is not a path operation at all -- 'start chain' is an option -- so it no longer appears.",
             "patterns": [
                 {
                     "comment": "A coordinate follows, possibly relative, or 'cycle' in its place; 'to' and 'edge' may take options and nodes first.",
-                    "match": "(?<![\\\\\\w])(?:rectangle|grid|to|edge)(?![\\w])(?=\\s*(?:[\\[(+]|node\\b|cycle\\b))",
+                    "match": "(?<![\\\\\\w])(?:rectangle|grid|to|edge)(?![\\w])(?=\\s*(?:[\\[(+]|node\\b|cycle\\b|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options in the current syntax, a parenthesised radius or angles in the old one, or nothing before the path ends.",
-                    "match": "(?<![\\\\\\w])(?:circle|ellipse|arc)(?![\\w])(?=\\s*(?:[\\[(;]))",
+                    "match": "(?<![\\\\\\w])(?:circle|ellipse|arc)(?![\\w])(?=\\s*(?:[\\[(;]|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options, a 'bend', or the end coordinate.",
-                    "match": "(?<![\\\\\\w])(?:parabola)(?![\\w])(?=\\s*(?:[\\[(+]|bend\\b|cycle\\b))",
+                    "match": "(?<![\\\\\\w])(?:parabola)(?![\\w])(?=\\s*(?:[\\[(+]|bend\\b|cycle\\b|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
-                    "comment": "Closes the path, so the path ends or carries on with a join, a node or options.",
-                    "match": "(?<![\\\\\\w])(?:cycle)(?![\\w])(?=\\s*(?:;|-|\\.\\.|node\\b|coordinate\\b|\\[))",
+                    "comment": "Closes the subpath, so it comes straight after a join or 'to' -- '-- cycle' is how it is nearly always written, and that covers one closing a braced subpath -- or else is followed by the path going on: its end, a join, a node, options or a new subpath. A closing brace alone is not enough, since a label ending in the word, as in 'duty cycle}', is commoner than a subpath that ends in it without a join.",
+                    "match": "(?<![\\\\\\w])(?:(?<=--|-- |\\.\\.|\\.\\. |-\\||-\\| |\\|-|\\|- |to )cycle(?![\\w])|cycle(?![\\w])(?=\\s*(?:;|-|\\.\\.|node\\b|coordinate\\b|[\\[(+]|$)))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options or the name.",
-                    "match": "(?<![\\\\\\w])(?:coordinate)(?![\\w])(?=\\s*(?:[\\[(]))",
+                    "match": "(?<![\\\\\\w])(?:coordinate)(?![\\w])(?=\\s*(?:[\\[(]|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options, a name, the text or pic type, 'at', 'foreach', or an animation; and 'node also'.",
-                    "match": "(?<![\\\\\\w])(?:node|pic)(?![\\w])(?=\\s*(?:[\\[({:]|at\\b|foreach\\b|also\\b))",
+                    "match": "(?<![\\\\\\w])(?:node|pic)(?![\\w])(?=\\s*(?:[\\[({:]|at\\b|foreach\\b|also\\b|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options, the child path, or 'foreach'.",
-                    "match": "(?<![\\\\\\w])(?:child)(?![\\w])(?=\\s*(?:[\\[{]|foreach\\b))",
+                    "match": "(?<![\\\\\\w])(?:child)(?![\\w])(?=\\s*(?:[\\[{]|foreach\\b|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options or the braced argument.",
-                    "match": "(?<![\\\\\\w])(?:graph|decorate|svg)(?![\\w])(?=\\s*(?:[\\[{]))",
+                    "match": "(?<![\\\\\\w])(?:graph|decorate|svg)(?![\\w])(?=\\s*(?:[\\[{]|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "Options, an expression, or the source of the points.",
-                    "match": "(?<![\\\\\\w])(?:plot)(?![\\w])(?=\\s*(?:[\\[(]|coordinates\\b|file\\b|function\\b))",
+                    "match": "(?<![\\\\\\w])(?:plot)(?![\\w])(?=\\s*(?:[\\[(]|coordinates\\b|file\\b|function\\b|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "A variable: \\x, \\p1, \\n1.",
-                    "match": "(?<![\\\\\\w])(?:foreach|let)(?![\\w])(?=\\s*(?:\\\\))",
+                    "match": "(?<![\\\\\\w])(?:foreach|let)(?![\\w])(?=\\s*(?:\\\\|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
                     "comment": "After 'foreach', the list; after 'let', the path that uses what was assigned.",
-                    "match": "(?<![\\\\\\w])(?:in)(?![\\w])(?=\\s*(?:[\\[({\\\\+]|node\\b|coordinate\\b))",
+                    "match": "(?<![\\\\\\w])(?:in)(?![\\w])(?=\\s*(?:[\\[({\\\\+]|node\\b|coordinate\\b|$))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
