@@ -126,7 +126,7 @@ async function choose(folder) {
     const figure = activeFigure(figureFolders);
 
     for (const dir of scriptFolders) {
-        const cwd = path.join(folder.fsPath, dir);
+        const cwd = path.resolve(folder.fsPath, dir);
         const figureFile = path.resolve(cwd, figureScript);
         if (figure && (await exists(figureFile))) {
             return {

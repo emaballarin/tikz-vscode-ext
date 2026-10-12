@@ -89,6 +89,7 @@ function reset() {
     state.commands = new Map();
     state.opened = [];
     state.applications = null;
+    state.slowRead = null;
 }
 
 const vscode = {
@@ -109,7 +110,10 @@ const vscode = {
         getConfiguration: () => ({ get: (key) => state.settings[key] }),
         fs: {
             stat: async (u) => fs.promises.stat(u.fsPath),
-            readFile: async (u) => new Uint8Array(await fs.promises.readFile(u.fsPath)),
+            readFile: async (u) => {
+                if (state.slowRead) await state.slowRead;
+                return new Uint8Array(await fs.promises.readFile(u.fsPath));
+            },
             readDirectory: async (u) =>
                 (await fs.promises.readdir(applications(u.fsPath), { withFileTypes: true })).map((d) => [
                     d.name,
@@ -330,6 +334,21 @@ test("disposing the index lets go of everything it subscribed to", async () => {
     );
 });
 
+test("a save landing while the index rebuilds is kept", async () => {
+    const root = folder({ "pre.tex": "\\tikzset{neuron/.style={draw}}" });
+    state.found = [path.join(root, "pre.tex")];
+    const index = new StyleIndex();
+    let release;
+    state.slowRead = new Promise((resolve) => (release = resolve));
+    const rebuilding = index.refreshAll();
+    await new Promise((r) => setImmediate(r));
+    // A new file saved mid-rebuild: the watcher's scan never listed it.
+    index._ingest(path.join(root, "new.tex"), "\\tikzset{fresh/.style={red}}");
+    release();
+    await rebuilding;
+    assert.deepStrictEqual([...index.names].sort(), ["fresh", "neuron"]);
+});
+
 // --- build ------------------------------------------------------------------------------
 
 /** Run the build command against `root` with `active` open, and return what it said. */
@@ -384,6 +403,13 @@ test("a script named without ./ is the one in the script folder, not one on the 
     state.settings.buildScript = "build.sh";
     const messages = await runBuild(root);
     assert.ok(fs.existsSync(path.join(root, "ran")), JSON.stringify(messages));
+});
+
+test("an absolute script folder is searched where it says", async () => {
+    const scripts = folder({ "build.sh": script('echo ran > "$(dirname "$0")/ran"') });
+    state.settings.scriptFolders = [scripts];
+    const messages = await runBuild(folder({}));
+    assert.ok(fs.existsSync(path.join(scripts, "ran")), JSON.stringify(messages));
 });
 
 test("a fail line in the status file is reported, whatever the exit code", async () => {

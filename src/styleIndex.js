@@ -63,16 +63,19 @@ class StyleIndex {
     }
 
     /**
-     * Re-scan the workspace from nothing. Reading into the existing map kept every file it
-     * had ever seen, so a file gone without a watcher event -- VS Code may report a deleted
-     * folder and not the files in it -- stayed in the index through Rebuild, the command
-     * that exists to recover from exactly that.
+     * Re-scan the workspace. Every file the scan does not list is dropped first: reading
+     * into the map alone kept every file it had ever seen, so one gone without a watcher
+     * event -- VS Code may report a deleted folder and not the files in it -- stayed in the
+     * index through Rebuild, the command that exists to recover from exactly that. Pruning
+     * in place, rather than swapping in a fresh map, keeps a save that lands mid-scan.
      */
     async refreshAll() {
         const uris = await vscode.workspace.findFiles(SOURCE_GLOB, "**/node_modules/**", MAX_FILES);
-        const next = new Map();
-        await Promise.all(uris.map((uri) => this._read(uri, next)));
-        this._byFile = next;
+        const listed = new Set(uris.map((uri) => uri.fsPath));
+        for (const file of [...this._byFile.keys()]) {
+            if (!listed.has(file)) this._byFile.delete(file);
+        }
+        await Promise.all(uris.map((uri) => this._read(uri)));
         this._rebuildNames();
     }
 
@@ -82,17 +85,14 @@ class StyleIndex {
         this._rebuildNames();
     }
 
-    /**
-     * @param {vscode.Uri} uri
-     * @param {Map<string, Map<string, number>>} [into]
-     */
-    async _read(uri, into = this._byFile) {
+    /** @param {vscode.Uri} uri */
+    async _read(uri) {
         try {
             const bytes = await vscode.workspace.fs.readFile(uri);
-            into.set(uri.fsPath, collectStyleDefinitions(Buffer.from(bytes).toString("utf8")));
+            this._byFile.set(uri.fsPath, collectStyleDefinitions(Buffer.from(bytes).toString("utf8")));
         } catch {
             // A file that vanished or cannot be read simply contributes nothing.
-            into.delete(uri.fsPath);
+            this._byFile.delete(uri.fsPath);
         }
     }
 
