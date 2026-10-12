@@ -32,8 +32,9 @@ import json, sys
 build = json.load(sys.stdin)
 print(build["url"], build["version"], build["sha256hash"], build["productVersion"])
 ')
-set -- $latest
-url=$1 commit=$2 sha256=$3 version=$4
+read -r url commit sha256 version <<EOF
+$latest
+EOF
 
 # The installation inside $dest: a bundle on macOS, the folder itself on Linux. Prints
 # nothing, and still succeeds, when there is none -- set -e would otherwise end the script
