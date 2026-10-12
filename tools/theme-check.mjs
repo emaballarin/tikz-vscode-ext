@@ -71,7 +71,9 @@ function resolve(theme, scope) {
             const sel = raw.trim().split(/\s+/).pop(); // ignore ancestor constraints
             if (!sel) continue;
             const isPrefix = scope === sel || scope.startsWith(sel + ".");
-            if (isPrefix && sel.length > bestLen && rule.settings?.foreground) {
+            // >=, not >: between equally specific selectors the later rule wins, and load()
+            // puts an including theme's rules after its base's for exactly that reason.
+            if (isPrefix && sel.length >= bestLen && rule.settings?.foreground) {
                 best = rule.settings.foreground;
                 bestLen = sel.length;
             }

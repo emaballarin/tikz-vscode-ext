@@ -267,6 +267,35 @@ def _():
         assert "macro occurrences that will be highlighted: 2" in out, out
 
 
+@test("tools/theme-check lets an including theme override the theme it includes")
+def _():
+    # VS Code's own themes are chains -- dark_modern includes dark_plus includes dark_vs --
+    # and a rule in the including theme wins over the same selector in its base.
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp) / "base.json"
+        child = Path(tmp) / "child.json"
+        base.write_text(
+            json.dumps(
+                {
+                    "colors": {"editor.foreground": "#ffffff"},
+                    "tokenColors": [{"scope": "constant.numeric", "settings": {"foreground": "#ffffff"}}],
+                }
+            )
+        )
+        child.write_text(
+            json.dumps(
+                {
+                    "include": "./base.json",
+                    "tokenColors": [{"scope": "constant.numeric", "settings": {"foreground": "#ff8800"}}],
+                }
+            )
+        )
+        result = node("tools/theme-check.mjs", str(child))
+        assert result.returncode == 0, result.stderr
+        out = plain(result.stdout)
+        assert "dimension" not in out, f"the override was ignored:\n{out}"
+
+
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"
