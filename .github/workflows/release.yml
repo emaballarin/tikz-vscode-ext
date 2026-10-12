@@ -37,6 +37,8 @@ concurrency:
 jobs:
     build:
         runs-on: ubuntu-latest
+        # A run takes a few minutes; this only bounds one that hangs, well short of six hours.
+        timeout-minutes: 30
         steps:
             - uses: actions/checkout@v7
               with:
@@ -62,8 +64,12 @@ jobs:
 
             - name: Check the grammar against the latest Insiders
               # A canary: it warns, and never fails the run -- not on a difference, and not
-              # on a download or an Insiders build that will not start either. The log is
-              # written outside the checkout, which tools/package would otherwise ship.
+              # on a download or an Insiders build that will not start either. One that hangs
+              # is cut off by the limit, and continue-on-error keeps even that from stopping
+              # the release. The log is written outside the checkout, which tools/package
+              # would otherwise ship.
+              timeout-minutes: 10
+              continue-on-error: true
               run: |
                   log="$RUNNER_TEMP/canary.log"
                   warn() {
@@ -176,6 +182,12 @@ jobs:
                   # rather than leaving the old tag for the release below to reuse.
                   if gh release view edge > /dev/null 2>&1; then
                     gh release delete edge --yes --cleanup-tag
+                  fi
+                  # A tag left without its release -- a cleanup that failed, a release deleted
+                  # by hand -- would be reused by the create below, which ignores --target for
+                  # a tag that exists, and edge would stay on the old commit.
+                  if git ls-remote --exit-code --tags origin refs/tags/edge > /dev/null; then
+                    git push origin :refs/tags/edge
                   fi
                   gh release create edge \
                     --prerelease \
