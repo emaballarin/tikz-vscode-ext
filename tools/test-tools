@@ -127,8 +127,13 @@ def package(tree):
 NAMESPACE = {"v": "http://schemas.microsoft.com/developer/vsx-schema/2011"}
 
 BEFORE = digest(ROOT)
-# A vsix the person running this built themselves is theirs; only a new one is ours.
-VSIX_BEFORE = set(ROOT.glob("*.vsix"))
+# A vsix the person running this built themselves is theirs; it must still be there, and
+# still be the same file, so a test that packaged in place cannot hide behind it.
+def vsix_files():
+    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in ROOT.glob("*.vsix")}
+
+
+VSIX_BEFORE = vsix_files()
 
 
 @test("every script under tools/ is executable and has a shebang")
@@ -302,17 +307,18 @@ def _():
     # The staging copy was a pipeline, and under sh -e only its last stage counts: a tar that
     # failed on one file still let the extracting tar succeed, and the vsix went out short.
     if os.geteuid() == 0:
-        raise AssertionError("running as root, which reads an unreadable file anyway")
-    with tempfile.TemporaryDirectory() as tmp:
-        tree = copy_tree(Path(tmp) / "tree")
-        locked = tree / "docs" / "authoring.md"
-        locked.chmod(0)
-        try:
-            result = run_script(tree / "tools" / "package", tree)
-        finally:
-            locked.chmod(0o644)
-        assert result.returncode != 0, "packaged a tree with an unreadable file"
-        assert not list(tree.glob("*.vsix")), "wrote a vsix anyway"
+        print("skip: running as root, which reads an unreadable file anyway", file=sys.stderr)
+        return
+    for locked, mode in (("docs/authoring.md", 0o644), ("docs", 0o755)):
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = copy_tree(Path(tmp) / "tree")
+            (tree / locked).chmod(0)
+            try:
+                result = run_script(tree / "tools" / "package", tree)
+            finally:
+                (tree / locked).chmod(mode)
+            assert result.returncode != 0, f"packaged a tree with {locked} unreadable"
+            assert not list(tree.glob("*.vsix")), f"wrote a vsix anyway, with {locked} unreadable"
 
 
 @test("tools/package decodes the manifest as JSON and writes it as XML")
@@ -443,7 +449,7 @@ def _():
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"
-    assert set(ROOT.glob("*.vsix")) == VSIX_BEFORE, "a vsix was left in the tree"
+    assert vsix_files() == VSIX_BEFORE, "a vsix was left in the tree, or one already there was rewritten"
 
 
 if failures:
