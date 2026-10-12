@@ -38,8 +38,9 @@ TEX
 # latexmk -cd compiles from inside build/, where a relative \input or \includegraphics in
 # the preamble would be looked for. TEXINPUTS adds this folder to TeX's search path, after
 # build/ itself -- ahead of it, a fig.tex lying beside this script would be compiled in
-# place of the one just written -- and the trailing colon keeps TeX's own path last.
-if TEXINPUTS=".:$PWD:${TEXINPUTS:-}" latexmk -pdf -cd -interaction=nonstopmode build/fig.tex > build/fig.log 2>&1; then
+# place of the one just written -- and the empty last entry keeps TeX's own path, even
+# when a TEXINPUTS of yours has none.
+if TEXINPUTS=".:$PWD:${TEXINPUTS:+$TEXINPUTS:}" latexmk -pdf -cd -interaction=nonstopmode build/fig.tex > build/fig.log 2>&1; then
   echo "ok $name" > build/.build-status
 else
   echo "fail see build/fig.log" > build/.build-status

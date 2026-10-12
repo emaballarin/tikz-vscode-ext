@@ -7,7 +7,8 @@
 // have unwound catches that across the whole corpus in one pass, which no amount of
 // clicking around in the editor would. A fragment ending inside its picture is normal --
 // it is \input into a parent -- so only *our* rules left open count; runawaySince in
-// tools/engine.mjs says how that is told apart. Exits 1 when anything runs away.
+// tools/engine.mjs says how that is told apart. Exits 1 when anything runs away, 0 when
+// nothing does, and 2 when given no files to look at.
 
 import fs from "node:fs";
 import path from "node:path";

@@ -55,7 +55,7 @@
                 "tikz.figureScript": {
                     "type": "string",
                     "default": "./fig.sh",
-                    "description": "Script run to preview a single figure. It is given the path of the active file, and run from the first folder that contains it (the workspace root, or a subfolder named in tikz.scriptFolders)."
+                    "description": "Script run to preview a single figure. It is given the path of the active file, and run from the first of tikz.scriptFolders that contains it. An absolute path is used as it stands."
                 },
                 "tikz.buildScript": {
                     "type": "string",
@@ -91,7 +91,7 @@
                         ".",
                         "latex"
                     ],
-                    "description": "Folders under the workspace root to search for the scripts, in order. Lets the sources sit in a subdirectory."
+                    "description": "Folders to search for the scripts, in order: relative to the workspace root, or absolute. Lets the sources sit in a subdirectory."
                 }
             }
         },

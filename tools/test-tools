@@ -88,7 +88,7 @@ def plain(text):
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
-def run_example(project, figure, *, latexmk="exit 0"):
+def run_example(project, figure, *, latexmk="exit 0", texinputs=None):
     """Run examples/fig.sh from `project` on `figure`, with a stub latexmk that records the
     TEXINPUTS it was given. Returns that, the generated build/fig.tex and the status line."""
     shutil.copy(ROOT / "examples" / "fig.sh", project / "fig.sh")
@@ -98,6 +98,8 @@ def run_example(project, figure, *, latexmk="exit 0"):
     (stub / "latexmk").chmod(0o755)
     env = {**os.environ, "PATH": f"{stub}{os.pathsep}{os.environ['PATH']}"}
     env.pop("TEXINPUTS", None)
+    if texinputs is not None:
+        env["TEXINPUTS"] = texinputs
     result = subprocess.run(
         [str(project / "fig.sh"), str(figure)], cwd=str(project), env=env, capture_output=True, text=True, check=False
     )
@@ -421,6 +423,9 @@ def _():
         assert first == ".", f"build/ should be searched first: {texinputs}"
         assert os.path.realpath(folder) == os.path.realpath(project), texinputs
         assert rest == "", f"TeX's own path should follow, by an empty last entry: {texinputs}"
+        # A TEXINPUTS of the user's own is kept, and TeX's path still follows it.
+        texinputs, _, _ = run_example(project, project / "figs" / "flow.tex", texinputs="/my/styles")
+        assert texinputs.endswith(f"{os.pathsep}/my/styles{os.pathsep}"), texinputs
 
 
 @test("examples/fig.sh wraps a .tikz picture body, and only that")

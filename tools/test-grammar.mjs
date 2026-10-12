@@ -147,16 +147,19 @@ const audit = (files) =>
     spawnSync(process.execPath, [path.join(REPO, "tools", "audit.mjs"), ...files], {
         env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
         encoding: "utf8",
-    }).status;
+        timeout: 120000,
+    });
 for (const [files, expected, what] of [
     [runaways.map((name) => path.join(RUNAWAY, name)), 1, "the runaways"],
     [fixtures(), 0, "the fixtures"],
     [[], 2, "no files"],
 ]) {
-    const status = audit(files);
-    if (status !== expected) {
+    const { status, stdout } = audit(files);
+    // An exit of 1 is also what a crash looks like, so the runaways must be named too.
+    const named = (stdout ?? "").split("\n").filter((line) => line.includes("RUNAWAY")).length;
+    if (status !== expected || named !== (expected === 1 ? files.length : 0)) {
         failed++;
-        console.error(`FAIL audit.mjs exits ${status} on ${what}, not ${expected}`);
+        console.error(`FAIL audit.mjs exits ${status} on ${what}, naming ${named} runaways; expected ${expected}`);
     }
 }
 
