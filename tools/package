@@ -51,14 +51,27 @@ mkdir -p "$stage/extension"
 # exclude list here would always be one cache behind. A tracked file deleted from the tree
 # is left out rather than failing the tar. Outside a git checkout there is no such list,
 # and the excludes stand in for it, the VS Code that CI downloads among them.
+#
+# Each step writes a file rather than feeding a pipe: under sh -e only the last command of
+# a pipeline counts, so a tar that failed on one unreadable file let the extraction
+# succeed, and the vsix went out short.
 if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-  git ls-files -z --cached --others --exclude-standard |
-    python3 -c 'import os, sys; sys.stdout.buffer.write(b"".join(p + b"\0" for p in sys.stdin.buffer.read().split(b"\0") if p and os.path.lexists(p)))' |
-    tar -cf - --null -T - | (cd "$stage/extension" && tar -xf -)
+  git ls-files -z --cached --others --exclude-standard > "$stage/listed"
+  python3 -c '
+import os, sys
+with open(sys.argv[1], "rb") as source:
+    paths = [p for p in source.read().split(b"\0") if p and os.path.lexists(p)]
+with open(sys.argv[2], "wb") as target:
+    target.write(b"".join(p + b"\0" for p in paths))
+' "$stage/listed" "$stage/files"
+  tar -cf "$stage/tree.tar" --null -T "$stage/files"
 else
-  tar -cf - --exclude=.git --exclude=node_modules --exclude=.DS_Store --exclude='*.vsix' --exclude=__pycache__ \
-    --exclude=.vscode-test --exclude=.ruff_cache . | (cd "$stage/extension" && tar -xf -)
+  tar -cf "$stage/tree.tar" --exclude=.git --exclude=node_modules --exclude=.DS_Store --exclude='*.vsix' \
+    --exclude=__pycache__ --exclude=.vscode-test --exclude=.ruff_cache .
 fi
+tar -xf "$stage/tree.tar" -C "$stage/extension"
+# The stage is the root of the zip, so nothing but the extension may be left in it.
+rm -f "$stage/tree.tar" "$stage/listed" "$stage/files"
 
 # The extension editor sanitises a README down to http(s) image sources -- a relative
 # path draws a broken tile, and so does a data: URI with the image inside it. So the

@@ -242,6 +242,10 @@ def _():
             ):
                 assert required in members, f"{required} is missing from the vsix"
             assert not any(name.startswith("extension/.git/") for name in members), ".git shipped"
+            # The root of a vsix is the two metadata files and the extension; anything else
+            # there is staging left behind.
+            root = {name for name in members if not name.startswith("extension/")}
+            assert root == {"extension.vsixmanifest", "[Content_Types].xml"}, f"stray files at the root: {root}"
             document = ElementTree.fromstring(archive.read("extension.vsixmanifest"))
             readme = archive.read("extension/README.md").decode("utf-8")
 
@@ -291,6 +295,24 @@ def _():
         assert not any(".ruff_cache" in n or n.endswith(".vsix") for n in names), [n for n in names if "ruff" in n]
         assert "extension/docs/authoring.md" not in names, "a deleted file was shipped"
         assert "extension/docs/highlighting.md" in names
+
+
+@test("tools/package fails rather than ship a tree it could not read whole")
+def _():
+    # The staging copy was a pipeline, and under sh -e only its last stage counts: a tar that
+    # failed on one file still let the extracting tar succeed, and the vsix went out short.
+    if os.geteuid() == 0:
+        raise AssertionError("running as root, which reads an unreadable file anyway")
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        locked = tree / "docs" / "authoring.md"
+        locked.chmod(0)
+        try:
+            result = run_script(tree / "tools" / "package", tree)
+        finally:
+            locked.chmod(0o644)
+        assert result.returncode != 0, "packaged a tree with an unreadable file"
+        assert not list(tree.glob("*.vsix")), "wrote a vsix anyway"
 
 
 @test("tools/package decodes the manifest as JSON and writes it as XML")
