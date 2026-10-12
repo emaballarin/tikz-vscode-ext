@@ -59,11 +59,12 @@ mkdir -p "$stage/extension"
 # succeed, and the vsix went out short.
 if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
   # git skips a folder it cannot open with a warning and carries on, exit 0 -- for a folder
-  # it does not track yet, that is the only sign the folder exists. Any word from it fails.
+  # it does not track yet, that is the only sign the folder exists. Any word from it fails,
+  # since a warning is the only way it reports that, and git's own text is shown.
   git ls-files -z --cached --others --exclude-standard > "$stage/listed" 2> "$stage/warned"
   if [ -s "$stage/warned" ]; then
     cat "$stage/warned" >&2
-    echo "package: git could not read the whole tree" >&2
+    echo "package: stopping, since git did not list the tree cleanly (its words are above)" >&2
     exit 1
   fi
   python3 -c '

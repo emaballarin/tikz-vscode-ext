@@ -141,7 +141,8 @@ for (const name of runaways) {
 }
 
 // audit.mjs is the command a person runs over a corpus, and its exit status is what a
-// script would gate on: 1 for any runaway, 0 for none, 2 for nothing to look at. It runs
+// script would gate on: 1 for any runaway, 0 for none, 2 for nothing to look at, 3 for a
+// run it could not finish. It runs
 // under the same Electron as this script.
 const audit = (files) =>
     spawnSync(process.execPath, [path.join(REPO, "tools", "audit.mjs"), ...files], {

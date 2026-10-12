@@ -312,20 +312,26 @@ def _():
         print("skip: running as root, which reads an unreadable file anyway", file=sys.stderr)
         return
     # A tracked file, a tracked folder, and a folder git does not track yet, which git skips
-    # with no more than a warning.
-    for locked, mode in (("docs/authoring.md", 0o644), ("docs", 0o755), ("drafts", 0o755)):
+    # with no more than a warning -- and a tracked folder that can be listed but not entered,
+    # of which git says nothing, so that only packaging's own check stands in the way.
+    for locked, locked_mode, mode in (
+        ("docs/authoring.md", 0, 0o644),
+        ("docs", 0, 0o755),
+        ("drafts", 0, 0o755),
+        ("docs", 0o644, 0o755),
+    ):
         with tempfile.TemporaryDirectory() as tmp:
             tree = copy_tree(Path(tmp) / "tree")
             (tree / "drafts").mkdir()
             (tree / "drafts" / "figure.tex").write_text("\\draw (0,0);\n")
-            (tree / locked).chmod(0)
+            (tree / locked).chmod(locked_mode)
             try:
                 result = run_script(tree / "tools" / "package", tree)
             finally:
                 (tree / locked).chmod(mode)
             assert result.returncode != 0, f"packaged a tree with {locked} unreadable"
             assert not list(tree.glob("*.vsix")), f"wrote a vsix anyway, with {locked} unreadable"
-            assert Path(locked).parts[0] in result.stderr, f"did not say what it could not read: {result.stderr}"
+            assert locked in result.stderr, f"did not name {locked}: {result.stderr}"
 
 
 @test("tools/package takes a tracked folder replaced by a file as deleted, not unreadable")
@@ -466,6 +472,19 @@ def _():
             assert inputs in tex, tex
             assert ("\\begin{tikzpicture}\n" + inputs + "\n\\end{tikzpicture}" in tex) == wrapped, f"{name}:\n{tex}"
             assert status == f"ok {Path(name).stem}", f"{name}: {status}"
+
+
+@test("tools/audit.mjs exits 3, not 1, when a grammar will not load")
+def _():
+    # A grammar left mid-edit fails to parse, and that is when the audit is run; an uncaught
+    # error exits 1, which a script gating on the audit would read as a runaway.
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree", git=False)
+        grammar = tree / "syntaxes" / "tikz-toplevel.tmLanguage.json"
+        grammar.write_text(grammar.read_text(encoding="utf-8")[:-10])
+        result = run_script(tree / "tools" / "tm", tree, "tools/audit.mjs", "test/minimal.tex")
+        assert result.returncode == 3, f"exit {result.returncode}: {result.stderr.strip()[-300:]}"
+        assert "RUNAWAY" not in result.stdout, result.stdout
 
 
 @test("none of the above touched the working tree")

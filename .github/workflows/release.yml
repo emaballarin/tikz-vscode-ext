@@ -86,8 +86,8 @@ jobs:
                       echo '```'
                     } >> "$GITHUB_STEP_SUMMARY"
                   }
-                  # CANARY says how it went, for the summary; a step cut off by its limit never
-                  # writes it, and the summary says so.
+                  # CANARY says how it went, for the summary; a step cut off by its limit, or
+                  # skipped after Stable failed, never writes it, and the summary says so.
                   if ! insider=$(./tools/fetch-vscode insider 2> "$log"); then
                     echo "CANARY=not fetched" >> "$GITHUB_ENV"
                     warn "the latest Insiders could not be fetched" "The grammar was not checked against it. Stable passed, so this release is unaffected."
@@ -98,7 +98,7 @@ jobs:
                     echo "CANARY=agrees" >> "$GITHUB_ENV"
                     cat "$log"
                   else
-                    echo "CANARY=differs" >> "$GITHUB_ENV"
+                    echo "CANARY=differs, or would not run" >> "$GITHUB_ENV"
                     warn "the next VS Code changes TikZ highlighting" "The latest Insiders tokenises the fixtures differently from what is recorded, or would not run them. Stable still agrees, so this release is unaffected; look before Insiders becomes Stable."
                   fi
 
@@ -253,5 +253,5 @@ jobs:
                     echo "| channel | ${{ steps.version.outputs.channel }} |"
                     echo "| commit | \`${GITHUB_SHA:0:7}\` |"
                     echo "| tested on | $(build "$VSCODE_STABLE") |"
-                    echo "| canary | $(build "$VSCODE_INSIDER") ${CANARY:-did not finish} |"
+                    echo "| canary | $(build "$VSCODE_INSIDER") ${CANARY:-did not run, or did not finish} |"
                   } >> "$GITHUB_STEP_SUMMARY"

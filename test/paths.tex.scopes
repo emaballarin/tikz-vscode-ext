@@ -545,7 +545,20 @@
         "]"                      punctuation.section.options.end.tikz
   41      pepper};
         ";"                      punctuation.terminator.tikz
-  42    \draw (a) .. controls (b) and
+  42    \node [text width=4cm] {look at
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "["                      punctuation.section.options.begin.tikz
+        "text width"             entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "4"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "]"                      punctuation.section.options.end.tikz
+  43      this knob, which controls
+        ","                      punctuation.separator.tikz
+  44      the gain};
+        ";"                      punctuation.terminator.tikz
+  45    \draw (a) .. controls (b) and
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "draw"                   support.function.general.tex
         "("                      punctuation.section.coordinate.begin.tikz
@@ -555,7 +568,7 @@
         "("                      punctuation.section.coordinate.begin.tikz
         "b"                      variable.other.coordinate.tikz
         ")"                      punctuation.section.coordinate.end.tikz
-  43      (c) .. (d);
+  46      (c) .. (d);
         "("                      punctuation.section.coordinate.begin.tikz
         "c"                      variable.other.coordinate.tikz
         ")"                      punctuation.section.coordinate.end.tikz
@@ -564,7 +577,7 @@
         "d"                      variable.other.coordinate.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  44    \node [text width=4cm] {We go from here to
+  47    \node [text width=4cm] {We go from here to
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "["                      punctuation.section.options.begin.tikz
@@ -574,9 +587,9 @@
         "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
         "]"                      punctuation.section.options.end.tikz
         "to"                     keyword.control.path.tikz
-  45      there and back};
+  48      there and back};
         ";"                      punctuation.terminator.tikz
-  46    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
+  49    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ","                      punctuation.separator.tikz
@@ -584,12 +597,12 @@
         ","                      punctuation.separator.tikz
         ","                      punctuation.separator.tikz
         ";"                      punctuation.terminator.tikz
-  47    \node {go to the store in town at noon};
+  50    \node {go to the store in town at noon};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  48    \node {a circle and a grid in a rectangle};
+  51    \node {a circle and a grid in a rectangle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  49  \end{tikzpicture}
+  52  \end{tikzpicture}

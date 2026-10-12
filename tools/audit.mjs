@@ -13,10 +13,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { INITIAL, grammarFor, ourScopes, registry, runawaySince } from "./engine.mjs";
+import { findVSCode } from "./vscode.mjs";
 
-const OURS = ourScopes();
-const reg = registry();
 const files = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 if (!files.length) {
     console.error("usage: audit.mjs <file>...");
@@ -26,7 +24,14 @@ if (!files.length) {
 let flagged = 0;
 let totalOurs = 0;
 
+// The engine is loaded in here too, not at the top: a grammar file left mid-edit fails to
+// parse while it loads, and that is when this is run. Outside VS Code's Electron the engine
+// would exit 2, which means "no files" here, so that is checked first.
 try {
+    if (!findVSCode()) throw new Error(`${process.execPath} is not VS Code's Electron; run this through tools/tm`);
+    const { INITIAL, grammarFor, ourScopes, registry, runawaySince } = await import("./engine.mjs");
+    const OURS = ourScopes();
+    const reg = registry();
     for (const file of files) {
         const grammar = await grammarFor(reg, file);
         let stack = INITIAL;
