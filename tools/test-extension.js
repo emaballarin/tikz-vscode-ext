@@ -359,6 +359,12 @@ test("a figure runs the figure script with its path, from the folder holding the
     assert.match(messages[0][1], /^Built flow in \d+\.\ds$/);
 });
 
+test("a .tikz figure is named without its extension", async () => {
+    const root = folder({ "latex/fig.sh": script("exit 0"), "latex/ch1-figs/flow.tikz": "" });
+    const messages = await runBuild(root, figureIn(root, "ch1-figs/flow.tikz"));
+    assert.match(messages[0][1], /^Built preview flow in /);
+});
+
 test("anything else runs the build script, with no arguments", async () => {
     const root = folder({ "build.sh": script('echo "$#" > ran') });
     const messages = await runBuild(root, documentOf("", { file: path.join(root, "main.tex") }));

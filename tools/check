@@ -170,6 +170,36 @@ def check_readme(manifest):
         failures.append(f"README settings table lists {key}, which package.json does not declare")
 
 
+def strip_jsonc(text):
+    """JSONC to JSON: comments dropped outside strings, then trailing commas."""
+    out, i = [], 0
+    while i < len(text):
+        if text[i] == '"':
+            j = i + 1
+            while text[j] != '"' or text[j - 1] == "\\":
+                j += 1
+            out.append(text[i : j + 1])
+            i = j + 1
+        elif text.startswith("//", i):
+            i = text.find("\n", i) if "\n" in text[i:] else len(text)
+        elif text.startswith("/*", i):
+            i = text.index("*/", i) + 2
+        else:
+            out.append(text[i])
+            i += 1
+    return re.sub(r",(\s*[}\]])", r"\1", "".join(out))
+
+
+def check_snippet(manifest):
+    # Bracket pair colourisation overrides the punctuation colours the snippet sets, so it
+    # has to be off wherever this grammar colours brackets: LaTeX, and our own languages.
+    snippet = json.loads(strip_jsonc((ROOT / "settings-snippet.jsonc").read_text(encoding="utf-8")))
+    languages = ["latex"] + [language["id"] for language in manifest["contributes"]["languages"]]
+    for language in languages:
+        pairs = snippet.get(f"[{language}]", {}).get("editor.language.colorizedBracketPairs")
+        check(pairs == [], f"settings-snippet.jsonc leaves bracket pair colours on for [{language}]")
+
+
 def check_examples():
     # Copied into a project and run as they are, so they have to arrive executable.
     for example in sorted((ROOT / "examples").glob("*.sh")):
@@ -181,6 +211,7 @@ def main():
     check_manifest(manifest)
     check_grammars(manifest)
     check_readme(manifest)
+    check_snippet(manifest)
     check_examples()
     if failures:
         for failure in failures:

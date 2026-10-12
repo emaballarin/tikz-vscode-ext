@@ -53,10 +53,13 @@
     // a bracket -- and so does the '$' of a calc coordinate, which is why ($ can end up
     // half gold and half blue.
     //
-    // Emptying the list for LaTeX alone turns it off here and leaves rainbow brackets on in
-    // every other language.
+    // Emptying the list for LaTeX, and for the .tikz files this extension adds as a language
+    // of their own, turns it off there and leaves rainbow brackets on everywhere else.
     // ---------------------------------------------------------------------------------
     "[latex]": {
+        "editor.language.colorizedBracketPairs": [],
+    },
+    "[tikz]": {
         "editor.language.colorizedBracketPairs": [],
     },
 

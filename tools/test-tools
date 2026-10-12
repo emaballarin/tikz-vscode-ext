@@ -331,6 +331,29 @@ def _():
         assert texinputs == f"{project}{os.pathsep}", texinputs
 
 
+@test("examples/fig.sh wraps a .tikz picture body, and only that")
+def _():
+    # A .tikz file is picture body alone, its \\begin{tikzpicture} in the parent that inputs
+    # it -- unless it was written with one, as tikzplotlib writes them. A .tex figure is input
+    # as it stands, whatever environment it uses (forest, circuitikz, ...).
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp) / "latex"
+        figs = project / "figs"
+        figs.mkdir(parents=True)
+        cases = {
+            "body.tikz": ("\\draw (0,0) -- (1,1);\n", True),
+            "whole.tikz": ("% from tikzplotlib\n\\begin{tikzpicture}\n\\draw (0,0);\n\\end{tikzpicture}\n", False),
+            "tree.tex": ("\\begin{forest}[a[b]]\\end{forest}\n", False),
+        }
+        for name, (content, wrapped) in cases.items():
+            (figs / name).write_text(content)
+            _, tex, status = run_example(project, figs / name)
+            inputs = f"\\input{{{figs / name}}}"
+            assert inputs in tex, tex
+            assert ("\\begin{tikzpicture}\n" + inputs + "\n\\end{tikzpicture}" in tex) == wrapped, f"{name}:\n{tex}"
+            assert status == f"ok {Path(name).stem}", f"{name}: {status}"
+
+
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"

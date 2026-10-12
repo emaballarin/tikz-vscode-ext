@@ -134,7 +134,7 @@ async function choose(folder) {
                 file: figureFile,
                 args: [figure.uri.fsPath],
                 cwd,
-                label: `preview ${path.basename(figure.uri.fsPath, ".tex")}`,
+                label: `preview ${path.parse(figure.uri.fsPath).name}`,
             };
         }
         const buildFile = path.resolve(cwd, buildScript);

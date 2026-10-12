@@ -10,12 +10,28 @@ set -e
 # in the document.
 preamble="$PWD/preamble.tex"
 
+# A .tikz file is picture body alone, its \begin{tikzpicture} being in the document that
+# inputs it -- unless it was written with one, as tikzplotlib writes them. Only a bare body
+# is wrapped. A .tex figure is input as it stands, whatever environment it draws in.
+figure="\\input{$1}"
+case "$1" in
+  *.tikz)
+    if ! grep -q '^[^%]*\\begin{tikzpicture}' "$1"; then
+      figure="\\begin{tikzpicture}
+$figure
+\\end{tikzpicture}"
+    fi
+    ;;
+esac
+name=$(basename "$1")
+name=${name%.*}
+
 mkdir -p build
 cat > build/fig.tex <<TEX
 \documentclass[tikz, border=2pt]{standalone}
 \input{$preamble}
 \begin{document}
-\input{$1}
+$figure
 \end{document}
 TEX
 
@@ -23,7 +39,7 @@ TEX
 # the preamble would be looked for. TEXINPUTS puts this folder on TeX's search path first;
 # the trailing colon keeps TeX's own path after it.
 if TEXINPUTS="$PWD:${TEXINPUTS:-}" latexmk -pdf -cd -interaction=nonstopmode build/fig.tex > build/fig.log 2>&1; then
-  echo "ok $(basename "$1" .tex)" > build/.build-status
+  echo "ok $name" > build/.build-status
 else
   echo "fail see build/fig.log" > build/.build-status
   exit 1
