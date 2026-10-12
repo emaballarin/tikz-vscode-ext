@@ -311,9 +311,13 @@ def _():
     if os.geteuid() == 0:
         print("skip: running as root, which reads an unreadable file anyway", file=sys.stderr)
         return
-    for locked, mode in (("docs/authoring.md", 0o644), ("docs", 0o755)):
+    # A tracked file, a tracked folder, and a folder git does not track yet, which git skips
+    # with no more than a warning.
+    for locked, mode in (("docs/authoring.md", 0o644), ("docs", 0o755), ("drafts", 0o755)):
         with tempfile.TemporaryDirectory() as tmp:
             tree = copy_tree(Path(tmp) / "tree")
+            (tree / "drafts").mkdir()
+            (tree / "drafts" / "figure.tex").write_text("\\draw (0,0);\n")
             (tree / locked).chmod(0)
             try:
                 result = run_script(tree / "tools" / "package", tree)
@@ -321,6 +325,19 @@ def _():
                 (tree / locked).chmod(mode)
             assert result.returncode != 0, f"packaged a tree with {locked} unreadable"
             assert not list(tree.glob("*.vsix")), f"wrote a vsix anyway, with {locked} unreadable"
+            assert Path(locked).parts[0] in result.stderr, f"did not say what it could not read: {result.stderr}"
+
+
+@test("tools/package takes a tracked folder replaced by a file as deleted, not unreadable")
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        shutil.rmtree(tree / "docs")
+        (tree / "docs").write_text("now a file\n")
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            names = archive.namelist()
+        assert "extension/docs" in names and not any(n.startswith("extension/docs/") for n in names), names
 
 
 @test("tools/package decodes the manifest as JSON and writes it as XML")
