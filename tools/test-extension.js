@@ -369,6 +369,30 @@ test("a file saved while the rebuild is still scanning is kept", async () => {
     assert.deepStrictEqual([...index.names].sort(), ["fresh", "neuron"]);
 });
 
+test("two rebuilds overlapping keep what was saved during either, and neither throws", async () => {
+    const root = folder({ "pre.tex": "\\tikzset{neuron/.style={draw}}" });
+    state.found = [path.join(root, "pre.tex")];
+    const index = new StyleIndex();
+    let releaseFirst;
+    state.slowFind = new Promise((resolve) => (releaseFirst = resolve));
+    const first = index.refreshAll();
+    await new Promise((r) => setImmediate(r));
+    let releaseSecond;
+    state.slowFind = new Promise((resolve) => (releaseSecond = resolve));
+    const second = index.refreshAll();
+    await new Promise((r) => setImmediate(r));
+    index._ingest(path.join(root, "saved.tex"), "\\tikzset{saved/.style={red}}");
+    // The watcher's report of a new file, the other way a file reaches the index.
+    fs.writeFileSync(path.join(root, "watched.tex"), "\\tikzset{watched/.style={blue}}");
+    const watched = index.refreshFile(uri(path.join(root, "watched.tex")));
+    releaseFirst();
+    await first;
+    releaseSecond();
+    await second;
+    await watched;
+    assert.deepStrictEqual([...index.names].sort(), ["neuron", "saved", "watched"]);
+});
+
 // --- build ------------------------------------------------------------------------------
 
 /** Run the build command against `root` with `active` open, and return what it said. */

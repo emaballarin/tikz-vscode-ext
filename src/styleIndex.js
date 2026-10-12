@@ -24,8 +24,8 @@ class StyleIndex {
         this.onDidChange = this._onDidChange.event;
         this._watcher = undefined;
         this._saveListener = undefined;
-        /** @type {Set<string> | null} files ingested since a rebuild began, which it must keep */
-        this._touched = null;
+        /** @type {Set<Set<string>>} for each rebuild running, the files touched since it began */
+        this._rebuilds = new Set();
     }
 
     /** @returns {Set<string>} every style name currently known */
@@ -74,23 +74,31 @@ class StyleIndex {
      * spared by having been touched since the rebuild began.
      */
     async refreshAll() {
-        this._touched = new Set();
+        // One set per rebuild, so two that overlap -- the activation scan and a Rebuild
+        // pressed while it runs -- each keep their own and neither clears the other's.
+        const touched = new Set();
+        this._rebuilds.add(touched);
         try {
             const uris = await vscode.workspace.findFiles(SOURCE_GLOB, "**/node_modules/**", MAX_FILES);
             const listed = new Set(uris.map((uri) => uri.fsPath));
             for (const file of [...this._byFile.keys()]) {
-                if (!listed.has(file) && !this._touched.has(file)) this._byFile.delete(file);
+                if (!listed.has(file) && !touched.has(file)) this._byFile.delete(file);
             }
             await Promise.all(uris.map((uri) => this._read(uri)));
         } finally {
-            this._touched = null;
+            this._rebuilds.delete(touched);
         }
         this._rebuildNames();
     }
 
+    /** Mark a file as touched for every rebuild running, which must not prune it. */
+    _touch(path) {
+        for (const touched of this._rebuilds) touched.add(path);
+    }
+
     /** @param {vscode.Uri} uri */
     async refreshFile(uri) {
-        this._touched?.add(uri.fsPath);
+        this._touch(uri.fsPath);
         await this._read(uri);
         this._rebuildNames();
     }
@@ -111,7 +119,7 @@ class StyleIndex {
      * @param {string} text
      */
     _ingest(path, text) {
-        this._touched?.add(path);
+        this._touch(path);
         this._byFile.set(path, collectStyleDefinitions(text));
         this._rebuildNames();
     }
