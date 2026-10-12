@@ -13,6 +13,7 @@ a release gets gated on.
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -83,6 +84,27 @@ def node(*args):
 def plain(text):
     """Output without its colour codes."""
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
+def run_example(project, figure, *, latexmk="exit 0"):
+    """Run examples/fig.sh from `project` on `figure`, with a stub latexmk that records the
+    TEXINPUTS it was given. Returns that, the generated build/fig.tex and the status line."""
+    shutil.copy(ROOT / "examples" / "fig.sh", project / "fig.sh")
+    stub = project.parent / "bin"
+    stub.mkdir(exist_ok=True)
+    (stub / "latexmk").write_text(f'#!/bin/sh\necho "$TEXINPUTS" > "{project.parent}/texinputs"\n{latexmk}\n')
+    (stub / "latexmk").chmod(0o755)
+    env = {**os.environ, "PATH": f"{stub}{os.pathsep}{os.environ['PATH']}"}
+    env.pop("TEXINPUTS", None)
+    result = subprocess.run(
+        [str(project / "fig.sh"), str(figure)], cwd=str(project), env=env, capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, f"exit {result.returncode}: {result.stderr.strip()}"
+    return (
+        (project.parent / "texinputs").read_text().strip(),
+        (project / "build" / "fig.tex").read_text(),
+        (project / "build" / ".build-status").read_text().strip(),
+    )
 
 
 def edit_json(path, mutate):
@@ -294,6 +316,19 @@ def _():
         assert result.returncode == 0, result.stderr
         out = plain(result.stdout)
         assert "dimension" not in out, f"the override was ignored:\n{out}"
+
+
+@test("examples/fig.sh lets the preamble input files beside it")
+def _():
+    # latexmk -cd compiles from inside build/, where a relative \\input in the preamble is
+    # not found -- unless TEXINPUTS puts the script's folder on the search path, ahead of
+    # TeX's own (the trailing separator).
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp) / "latex"
+        (project / "figs").mkdir(parents=True)
+        (project / "figs" / "flow.tex").write_text("\\begin{tikzpicture}\\end{tikzpicture}\n")
+        texinputs, _, _ = run_example(project, project / "figs" / "flow.tex")
+        assert texinputs == f"{project}{os.pathsep}", texinputs
 
 
 @test("none of the above touched the working tree")

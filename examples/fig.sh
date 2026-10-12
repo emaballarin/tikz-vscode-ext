@@ -19,7 +19,10 @@ cat > build/fig.tex <<TEX
 \end{document}
 TEX
 
-if latexmk -pdf -cd -interaction=nonstopmode build/fig.tex > build/fig.log 2>&1; then
+# latexmk -cd compiles from inside build/, where a relative \input or \includegraphics in
+# the preamble would be looked for. TEXINPUTS puts this folder on TeX's search path first;
+# the trailing colon keeps TeX's own path after it.
+if TEXINPUTS="$PWD:${TEXINPUTS:-}" latexmk -pdf -cd -interaction=nonstopmode build/fig.tex > build/fig.log 2>&1; then
   echo "ok $(basename "$1" .tex)" > build/.build-status
 else
   echo "fail see build/fig.log" > build/.build-status
