@@ -245,6 +245,28 @@ def _():
         assert not shipped, f"shipped {shipped}"
 
 
+@test("tools/package ships what git would commit, so a self-ignoring cache stays out")
+def _():
+    # Tools that drop a cache in the tree often ignore it from inside -- ruff writes a
+    # .gitignore of "*" into .ruff_cache -- so git never shows it, and a tar of the tree
+    # shipped it all the same. A file deleted from the tree but still tracked must not
+    # trip the packaging either.
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        cache = tree / ".ruff_cache"
+        (cache / "0.9").mkdir(parents=True)
+        (cache / ".gitignore").write_text("*\n")
+        (cache / "0.9" / "entry").write_text("junk")
+        (tree / "src" / "stale.vsix").write_text("junk")
+        (tree / "docs" / "authoring.md").unlink()
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            names = archive.namelist()
+        assert not any(".ruff_cache" in n or n.endswith(".vsix") for n in names), [n for n in names if "ruff" in n]
+        assert "extension/docs/authoring.md" not in names, "a deleted file was shipped"
+        assert "extension/docs/highlighting.md" in names
+
+
 @test("tools/package decodes the manifest as JSON and writes it as XML")
 def _():
     # A sed capture copies `\\` where package.json means one backslash, and an `&` or a `<`

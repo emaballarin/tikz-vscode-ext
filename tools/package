@@ -45,10 +45,20 @@ stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 
 mkdir -p "$stage/extension"
-# What .gitignore leaves out stays out, and so does the VS Code that CI downloads to test
-# the grammar against, which would otherwise ship inside the vsix.
-tar -cf - --exclude=.git --exclude=node_modules --exclude=.DS_Store --exclude='*.vsix' \
-  --exclude=__pycache__ --exclude=.vscode-test . | (cd "$stage/extension" && tar -xf -)
+# What ships is what git would commit: tracked files, and new ones it does not ignore. The
+# .gitignore files say what is not source -- nested ones included, which is how a tool's
+# cache usually keeps itself out (ruff writes "*" into .ruff_cache/.gitignore) -- and an
+# exclude list here would always be one cache behind. A tracked file deleted from the tree
+# is left out rather than failing the tar. Outside a git checkout there is no such list,
+# and the excludes stand in for it, the VS Code that CI downloads among them.
+if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  git ls-files -z --cached --others --exclude-standard |
+    python3 -c 'import os, sys; sys.stdout.buffer.write(b"".join(p + b"\0" for p in sys.stdin.buffer.read().split(b"\0") if p and os.path.lexists(p)))' |
+    tar -cf - --null -T - | (cd "$stage/extension" && tar -xf -)
+else
+  tar -cf - --exclude=.git --exclude=node_modules --exclude=.DS_Store --exclude='*.vsix' --exclude=__pycache__ \
+    --exclude=.vscode-test --exclude=.ruff_cache . | (cd "$stage/extension" && tar -xf -)
+fi
 
 # The extension editor sanitises a README down to http(s) image sources -- a relative
 # path draws a broken tile, and so does a data: URI with the image inside it. So the
