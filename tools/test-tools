@@ -343,14 +343,19 @@ def _():
 @test("examples/fig.sh lets the preamble input files beside it")
 def _():
     # latexmk -cd compiles from inside build/, where a relative \\input in the preamble is
-    # not found -- unless TEXINPUTS puts the script's folder on the search path, ahead of
-    # TeX's own (the trailing separator).
+    # not found -- unless TEXINPUTS puts the script's folder on the search path, after
+    # build/ and ahead of TeX's own (the trailing separator).
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp) / "latex"
         (project / "figs").mkdir(parents=True)
         (project / "figs" / "flow.tex").write_text("\\begin{tikzpicture}\\end{tikzpicture}\n")
         texinputs, _, _ = run_example(project, project / "figs" / "flow.tex")
-        assert texinputs == f"{project}{os.pathsep}", texinputs
+        # The shell reports its folder physically, so compare resolved paths: on macOS the
+        # temporary folder is /var/..., which is a link to /private/var/....
+        first, folder, rest = texinputs.split(os.pathsep, 2)
+        assert first == ".", f"build/ should be searched first: {texinputs}"
+        assert os.path.realpath(folder) == os.path.realpath(project), texinputs
+        assert rest == "", f"TeX's own path should follow, by an empty last entry: {texinputs}"
 
 
 @test("examples/fig.sh wraps a .tikz picture body, and only that")
