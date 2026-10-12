@@ -16,6 +16,10 @@ import { INITIAL, grammarFor, ourScopes, registry, runawaySince } from "./engine
 const OURS = ourScopes();
 const reg = registry();
 const files = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+if (!files.length) {
+    console.error("usage: audit.mjs <file>...");
+    process.exit(2);
+}
 
 let flagged = 0;
 let totalOurs = 0;

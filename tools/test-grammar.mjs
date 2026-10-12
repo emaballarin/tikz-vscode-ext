@@ -19,6 +19,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { INITIAL, REPO, VSCODE_BUILD, grammarFor, ourScopes, registry, runawaySince } from "./engine.mjs";
 
 const update = process.argv.includes("--update");
@@ -135,6 +136,26 @@ for (const name of runaways) {
     if ((await runawaySince(path.join(RUNAWAY, name))) === null) {
         failed++;
         console.error(`FAIL test/runaway/${name} is not reported as a runaway`);
+    }
+}
+
+// audit.mjs is the command a person runs over a corpus, and its exit status is what a
+// script would gate on: 1 for any runaway, 0 for none, 2 for nothing to look at. It runs
+// under the same Electron as this script.
+const audit = (files) =>
+    spawnSync(process.execPath, [path.join(REPO, "tools", "audit.mjs"), ...files], {
+        env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+        encoding: "utf8",
+    }).status;
+for (const [files, expected, what] of [
+    [runaways.map((name) => path.join(RUNAWAY, name)), 1, "the runaways"],
+    [fixtures(), 0, "the fixtures"],
+    [[], 2, "no files"],
+]) {
+    const status = audit(files);
+    if (status !== expected) {
+        failed++;
+        console.error(`FAIL audit.mjs exits ${status} on ${what}, not ${expected}`);
     }
 }
 
