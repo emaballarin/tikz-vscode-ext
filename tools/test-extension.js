@@ -90,6 +90,7 @@ function reset() {
     state.opened = [];
     state.applications = null;
     state.slowRead = null;
+    state.slowFind = null;
 }
 
 const vscode = {
@@ -121,7 +122,10 @@ const vscode = {
                 ]),
             delete: async (u) => fs.promises.rm(u.fsPath),
         },
-        findFiles: async () => state.found.map(uri),
+        findFiles: async () => {
+            if (state.slowFind) await state.slowFind;
+            return state.found.map(uri);
+        },
         createFileSystemWatcher: () => {
             const watcher = {
                 create: new EventEmitter(),
@@ -343,6 +347,22 @@ test("a save landing while the index rebuilds is kept", async () => {
     const rebuilding = index.refreshAll();
     await new Promise((r) => setImmediate(r));
     // A new file saved mid-rebuild: the watcher's scan never listed it.
+    index._ingest(path.join(root, "new.tex"), "\\tikzset{fresh/.style={red}}");
+    release();
+    await rebuilding;
+    assert.deepStrictEqual([...index.names].sort(), ["fresh", "neuron"]);
+});
+
+test("a file saved while the rebuild is still scanning is kept", async () => {
+    // The scan's list is fixed when it returns, so a file created and saved before then is
+    // not on it -- and must not be pruned as if it had vanished.
+    const root = folder({ "pre.tex": "\\tikzset{neuron/.style={draw}}" });
+    state.found = [path.join(root, "pre.tex")];
+    const index = new StyleIndex();
+    let release;
+    state.slowFind = new Promise((resolve) => (release = resolve));
+    const rebuilding = index.refreshAll();
+    await new Promise((r) => setImmediate(r));
     index._ingest(path.join(root, "new.tex"), "\\tikzset{fresh/.style={red}}");
     release();
     await rebuilding;

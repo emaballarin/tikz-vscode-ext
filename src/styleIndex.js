@@ -24,6 +24,8 @@ class StyleIndex {
         this.onDidChange = this._onDidChange.event;
         this._watcher = undefined;
         this._saveListener = undefined;
+        /** @type {Set<string> | null} files ingested since a rebuild began, which it must keep */
+        this._touched = null;
     }
 
     /** @returns {Set<string>} every style name currently known */
@@ -67,20 +69,28 @@ class StyleIndex {
      * into the map alone kept every file it had ever seen, so one gone without a watcher
      * event -- VS Code may report a deleted folder and not the files in it -- stayed in the
      * index through Rebuild, the command that exists to recover from exactly that. Pruning
-     * in place, rather than swapping in a fresh map, keeps a save that lands mid-scan.
+     * in place, rather than swapping in a fresh map, keeps a save that lands while the files
+     * are being read; one that lands while the scan itself runs is not on its list, and is
+     * spared by having been touched since the rebuild began.
      */
     async refreshAll() {
-        const uris = await vscode.workspace.findFiles(SOURCE_GLOB, "**/node_modules/**", MAX_FILES);
-        const listed = new Set(uris.map((uri) => uri.fsPath));
-        for (const file of [...this._byFile.keys()]) {
-            if (!listed.has(file)) this._byFile.delete(file);
+        this._touched = new Set();
+        try {
+            const uris = await vscode.workspace.findFiles(SOURCE_GLOB, "**/node_modules/**", MAX_FILES);
+            const listed = new Set(uris.map((uri) => uri.fsPath));
+            for (const file of [...this._byFile.keys()]) {
+                if (!listed.has(file) && !this._touched.has(file)) this._byFile.delete(file);
+            }
+            await Promise.all(uris.map((uri) => this._read(uri)));
+        } finally {
+            this._touched = null;
         }
-        await Promise.all(uris.map((uri) => this._read(uri)));
         this._rebuildNames();
     }
 
     /** @param {vscode.Uri} uri */
     async refreshFile(uri) {
+        this._touched?.add(uri.fsPath);
         await this._read(uri);
         this._rebuildNames();
     }
@@ -101,6 +111,7 @@ class StyleIndex {
      * @param {string} text
      */
     _ingest(path, text) {
+        this._touched?.add(path);
         this._byFile.set(path, collectStyleDefinitions(text));
         this._rebuildNames();
     }
