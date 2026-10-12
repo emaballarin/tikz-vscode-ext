@@ -8,10 +8,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const { MACRO_USE, collectMacroDefinitions, collectStyleDefinitions, optionRegions, optionItemNames } = require(
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const { collectMacroDefinitions, collectStyleDefinitions, macroTokens, styleTokens } = require(
     `${REPO}/src/symbols.js`
 );
 
@@ -49,30 +50,19 @@ const macros = collectMacroDefinitions(text);
 console.log(`\x1b[1mmacros defined in this file (${macros.size})\x1b[0m`);
 for (const [name, at] of macros) console.log(`  \x1b[33m\\${name}\x1b[0m  line ${lineOf(at)}`);
 
-let uses = 0;
-MACRO_USE.lastIndex = 0;
-let m;
+// The same functions the provider calls, so what is printed is what will be highlighted.
+const uses = macroTokens(text);
 const useLines = new Map();
-while ((m = MACRO_USE.exec(text)) !== null) {
-    if (!macros.has(m[1])) continue;
-    uses++;
-    const l = lineOf(m.index);
-    useLines.set(m[1], (useLines.get(m[1]) ?? []).concat(l));
+for (const t of uses) {
+    const name = text.slice(t.start + 1, t.start + t.length);
+    useLines.set(name, (useLines.get(name) ?? []).concat(lineOf(t.start)));
 }
-console.log(`\n\x1b[1mmacro occurrences that will be highlighted: ${uses}\x1b[0m`);
+console.log(`\n\x1b[1mmacro occurrences that will be highlighted: ${uses.length}\x1b[0m`);
 for (const [name, lines] of useLines) console.log(`  \x1b[33m\\${name}\x1b[0m  lines ${lines.join(", ")}`);
 
-const local = collectStyleDefinitions(text);
-const hits = [];
-for (const region of optionRegions(text)) {
-    for (const item of optionItemNames(text, region)) {
-        const bare = item.name.replace(/\s*\/\..*$/, "").trim();
-        if (!bare) continue;
-        if (!known.has(bare) && !local.has(bare)) continue;
-        hits.push({ bare, line: lineOf(item.start), declaration: local.get(bare) === item.start });
-    }
-}
+const hits = styleTokens(text, known);
 console.log(`\n\x1b[1mstyle references that will be highlighted: ${hits.length}\x1b[0m`);
 for (const h of hits) {
-    console.log(`  \x1b[36m${h.bare}\x1b[0m  line ${h.line}${h.declaration ? "  (definition)" : ""}`);
+    const name = text.slice(h.start, h.start + h.length);
+    console.log(`  \x1b[36m${name}\x1b[0m  line ${lineOf(h.start)}${h.declaration ? "  (definition)" : ""}`);
 }

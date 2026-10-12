@@ -299,10 +299,68 @@ function optionItemNames(text, region) {
     return items;
 }
 
+/**
+ * Every use of a macro this text defines, its definition included. The token covers the
+ * backslash too, so the whole control sequence reads as one symbol.
+ * @param {string} text
+ * @returns {Array<{start: number, length: number, type: "tikzMacro", declaration: boolean}>}
+ */
+function macroTokens(text) {
+    const defined = collectMacroDefinitions(text);
+    const out = [];
+    if (defined.size === 0) return out;
+
+    MACRO_USE.lastIndex = 0;
+    let m;
+    while ((m = MACRO_USE.exec(text)) !== null) {
+        const definedAt = defined.get(m[1]);
+        if (definedAt === undefined) continue;
+        out.push({
+            start: m.index,
+            length: 1 + m[1].length,
+            type: "tikzMacro",
+            declaration: definedAt === m.index + 1,
+        });
+    }
+    return out;
+}
+
+/**
+ * Every place a style is applied or defined, given the names the workspace knows. This is
+ * the whole decision the provider makes about styles, kept here so tools/symbols-check.mjs
+ * reports exactly what the editor will highlight rather than an approximation of it.
+ * @param {string} text
+ * @param {Set<string>} known
+ * @returns {Array<{start: number, length: number, type: "tikzStyle", declaration: boolean}>}
+ */
+function styleTokens(text, known) {
+    const localDefinitions = collectStyleDefinitions(text);
+    const out = [];
+    if (known.size === 0 && localDefinitions.size === 0) return out;
+
+    for (const region of optionRegions(text)) {
+        for (const item of optionItemNames(text, region)) {
+            // A definition reads `name/.style`; a reference is the bare name.
+            const bare = item.name.replace(/\s*\/\..*$/, "").trim();
+            if (!bare) continue;
+            if (!known.has(bare) && !localDefinitions.has(bare)) continue;
+
+            // `name=value` is a key being set, not a style being applied. The exception is
+            // the definition itself, which is written `name/.style = {...}`.
+            const declaration = localDefinitions.get(bare) === item.start;
+            if (item.hasValue && !declaration) continue;
+
+            out.push({ start: item.start, length: bare.length, type: "tikzStyle", declaration });
+        }
+    }
+    return out;
+}
+
 module.exports = {
-    MACRO_USE,
     collectMacroDefinitions,
     collectStyleDefinitions,
     optionRegions,
     optionItemNames,
+    macroTokens,
+    styleTokens,
 };

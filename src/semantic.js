@@ -1,13 +1,7 @@
 "use strict";
 
 const vscode = require("vscode");
-const {
-    MACRO_USE,
-    collectMacroDefinitions,
-    collectStyleDefinitions,
-    optionRegions,
-    optionItemNames,
-} = require("./symbols");
+const { macroTokens, styleTokens } = require("./symbols");
 
 const TOKEN_TYPES = ["tikzMacro", "tikzStyle"];
 const TOKEN_MODIFIERS = ["declaration"];
@@ -58,10 +52,7 @@ class TikzSemanticTokensProvider {
 
         const text = document.getText();
 
-        /** @type {Array<{start: number, length: number, type: string, modifiers: string[]}>} */
-        const found = [];
-        this._markMacros(text, found);
-        this._markStyles(text, found);
+        const found = [...macroTokens(text), ...styleTokens(text, this._styleIndex.names)];
 
         // The builder encodes each token as a delta from the previous one, so they have to
         // go in document order. Macros and styles are gathered independently, so sort.
@@ -72,69 +63,13 @@ class TikzSemanticTokensProvider {
             builder.push(
                 new vscode.Range(document.positionAt(t.start), document.positionAt(t.start + t.length)),
                 t.type,
-                t.modifiers
+                t.declaration ? ["declaration"] : []
             );
         }
 
         const tokens = builder.build();
         this._cache = { uri: key, version: document.version, tokens };
         return tokens;
-    }
-
-    /**
-     * @param {string} text
-     * @param {Array<{start: number, length: number, type: string, modifiers: string[]}>} out
-     */
-    _markMacros(text, out) {
-        const defined = collectMacroDefinitions(text);
-        if (defined.size === 0) return;
-
-        MACRO_USE.lastIndex = 0;
-        let m;
-        while ((m = MACRO_USE.exec(text)) !== null) {
-            const name = m[1];
-            const definedAt = defined.get(name);
-            if (definedAt === undefined) continue;
-
-            // Cover the backslash too, so the whole control sequence reads as one symbol.
-            out.push({
-                start: m.index,
-                length: 1 + name.length,
-                type: "tikzMacro",
-                modifiers: definedAt === m.index + 1 ? ["declaration"] : [],
-            });
-        }
-    }
-
-    /**
-     * @param {string} text
-     * @param {Array<{start: number, length: number, type: string, modifiers: string[]}>} out
-     */
-    _markStyles(text, out) {
-        const known = this._styleIndex.names;
-        const localDefinitions = collectStyleDefinitions(text);
-        if (known.size === 0 && localDefinitions.size === 0) return;
-
-        for (const region of optionRegions(text)) {
-            for (const item of optionItemNames(text, region)) {
-                // A definition reads `name/.style`; a reference is the bare name.
-                const bare = item.name.replace(/\s*\/\..*$/, "").trim();
-                if (!bare) continue;
-                if (!known.has(bare) && !localDefinitions.has(bare)) continue;
-
-                // `name=value` is a key being set, not a style being applied. The exception is
-                // the definition itself, which is written `name/.style = {...}`.
-                const isDeclaration = localDefinitions.get(bare) === item.start;
-                if (item.hasValue && !isDeclaration) continue;
-
-                out.push({
-                    start: item.start,
-                    length: bare.length,
-                    type: "tikzStyle",
-                    modifiers: isDeclaration ? ["declaration"] : [],
-                });
-            }
-        }
     }
 
     dispose() {
