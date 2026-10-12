@@ -33,7 +33,8 @@ if (indexDir) {
         for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
             const p = path.join(dir, entry.name);
             if (entry.isDirectory()) {
-                if (entry.name !== ".git") walk(p);
+                // As the provider's own scan does, which excludes **/node_modules/**.
+                if (entry.name !== ".git" && entry.name !== "node_modules") walk(p);
             } else if (/\.(tex|sty|cls|tikz)$/.test(entry.name)) {
                 for (const name of collectStyleDefinitions(fs.readFileSync(p, "utf8")).keys()) known.add(name);
             }

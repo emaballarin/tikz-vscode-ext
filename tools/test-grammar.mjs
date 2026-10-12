@@ -7,7 +7,8 @@
 // .scopes file beside it, which turns the "regression cases" there into regressions a
 // run can actually fail on.
 //
-// Only the scopes this extension's grammars assign are recorded, merged over each run of
+// Only the scopes this extension's grammars assign are recorded -- two borrowed from the
+// host among them, for control sequences, so \draw is recorded too -- merged over each run of
 // text that carries the same ones. So the record is a function of what TikZ highlighting
 // looks like, not of how the stock LaTeX grammar happens to split its tokens -- which
 // matters, since CI runs this against whatever VS Code shipped last night. A host change

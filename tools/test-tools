@@ -354,6 +354,13 @@ def _():
         assert result.returncode == 0, result.stderr
         out = plain(result.stdout)
         assert "style references that will be highlighted: 2" in out, out
+        # --index stands in for the workspace scan, which leaves node_modules out.
+        workspace = Path(tmp) / "workspace"
+        (workspace / "node_modules" / "pkg").mkdir(parents=True)
+        (workspace / "pre.tex").write_text("\\tikzset{flow/.style={->}}")
+        (workspace / "node_modules" / "pkg" / "x.tex").write_text("\\tikzset{vendored/.style={red}}")
+        indexed = plain(node("tools/symbols-check.mjs", str(figure), "--index", str(workspace)).stdout)
+        assert "index: 1 styles" in indexed, indexed
         assert "x  line 2  (definition)" in out and "x  line 5" in out, out
         assert "x  line 4" not in out, out
         assert "macro occurrences that will be highlighted: 2" in out, out
