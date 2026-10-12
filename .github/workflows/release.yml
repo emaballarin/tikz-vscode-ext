@@ -4,8 +4,9 @@
 # the newest build of each quality rather than a pinned one. The latest Stable is what
 # people run today, so a difference there fails the run. The latest Insiders is what they
 # will run next: a difference there is reported as a warning in the run summary, and the
-# release goes out regardless. The recorded scopes keep only what our grammars assign, so
-# they move when TikZ highlighting moves, not when the host grammar reshuffles its tokens.
+# release goes out regardless. The recorded scopes keep only what our grammars assign --
+# two of those names are borrowed from the host, for control sequences -- so they move when
+# TikZ highlighting moves, not when the host grammar reshuffles its tokens.
 #
 # Two release surfaces. A `v*` tag cuts an immutable Release at exactly that version. Every
 # other push to the default branch force-updates a single rolling prerelease called `edge`,
@@ -47,42 +48,46 @@ jobs:
               with:
                   node-version: "22"
 
-            - name: Fetch the newest VS Code, Stable and Insiders
+            - name: Fetch the newest VS Code Stable
               # Downloaded under .vscode-test/, which tools/package leaves out of the vsix.
-              # The smoke line fails here, rather than three steps on, if the runner lacks a
+              # The smoke line fails here, rather than a step on, if the runner lacks a
               # library VS Code's Electron needs.
               run: |
                   stable=$(./tools/fetch-vscode stable)
-                  insider=$(./tools/fetch-vscode insider)
-                  {
-                    echo "VSCODE_STABLE=$stable"
-                    echo "VSCODE_INSIDER=$insider"
-                  } >> "$GITHUB_ENV"
-                  for app in "$stable" "$insider"; do
-                    VSCODE="$app" ./tools/tm -e 'console.log(`electron ${process.versions.electron}, node ${process.versions.node}`)'
-                  done
+                  echo "VSCODE_STABLE=$stable" >> "$GITHUB_ENV"
+                  VSCODE="$stable" ./tools/tm -e 'console.log(`electron ${process.versions.electron}, node ${process.versions.node}`)'
 
             - name: Test, against the latest Stable
               run: VSCODE="$VSCODE_STABLE" ./tools/test
 
             - name: Check the grammar against the latest Insiders
-              # A canary: it warns, and never fails the run.
+              # A canary: it warns, and never fails the run -- not on a difference, and not
+              # on a download or an Insiders build that will not start either. The log is
+              # written outside the checkout, which tools/package would otherwise ship.
               run: |
                   log="$RUNNER_TEMP/canary.log"
-                  if VSCODE="$VSCODE_INSIDER" ./tools/tm tools/test-grammar.mjs > "$log" 2>&1; then
+                  warn() {
                     cat "$log"
-                  else
-                    cat "$log"
-                    echo "::warning title=Insiders canary::the next VS Code changes TikZ highlighting; see the run summary"
+                    echo "::warning title=Insiders canary::$1; see the run summary"
                     {
-                      echo "### The next VS Code changes TikZ highlighting"
+                      echo "### Insiders canary: $1"
                       echo
-                      echo "The latest Insiders tokenises the fixtures differently from what is recorded. Stable still agrees, so this release is unaffected; look before Insiders becomes Stable."
+                      echo "$2"
                       echo
                       echo '```'
                       head -200 "$log"
                       echo '```'
                     } >> "$GITHUB_STEP_SUMMARY"
+                  }
+                  if ! insider=$(./tools/fetch-vscode insider 2> "$log"); then
+                    warn "the latest Insiders could not be fetched" "The grammar was not checked against it. Stable passed, so this release is unaffected."
+                    exit 0
+                  fi
+                  echo "VSCODE_INSIDER=$insider" >> "$GITHUB_ENV"
+                  if VSCODE="$insider" ./tools/tm tools/test-grammar.mjs > "$log" 2>&1; then
+                    cat "$log"
+                  else
+                    warn "the next VS Code changes TikZ highlighting" "The latest Insiders tokenises the fixtures differently from what is recorded, or would not run them. Stable still agrees, so this release is unaffected; look before Insiders becomes Stable."
                   fi
 
             - name: Decide the version
@@ -125,7 +130,10 @@ jobs:
             - name: Package
               id: package
               run: |
-                  vsix=$(./tools/package | tail -1)
+                  # Not `./tools/package | tail -1`: without pipefail the pipe would answer with
+                  # tail's status, and a failed packaging would go on to the checks below.
+                  out=$(./tools/package)
+                  vsix=$(printf '%s\n' "$out" | tail -1)
                   echo "path=$vsix" >> "$GITHUB_OUTPUT"
                   echo "name=$(basename "$vsix")" >> "$GITHUB_OUTPUT"
                   python3 - "$vsix" "${{ steps.version.outputs.version }}" <<'PY'
@@ -164,7 +172,11 @@ jobs:
                   asset="tikz-vscode-ext-edge.vsix"
                   cp "${{ steps.package.outputs.path }}" "$asset"
                   # Delete and recreate rather than edit: the tag has to move to this commit.
-                  gh release delete edge --yes --cleanup-tag || true
+                  # Only a missing release is skipped; a delete that fails stops the step,
+                  # rather than leaving the old tag for the release below to reuse.
+                  if gh release view edge > /dev/null 2>&1; then
+                    gh release delete edge --yes --cleanup-tag
+                  fi
                   gh release create edge \
                     --prerelease \
                     --target "$GITHUB_SHA" \

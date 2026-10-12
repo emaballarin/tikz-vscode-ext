@@ -27,7 +27,7 @@ esac
 cd "$(dirname "$0")/.."
 dest="$PWD/.vscode-test/$quality"
 
-latest=$(curl -fsSL "https://update.code.visualstudio.com/api/update/$platform/$quality/latest" | python3 -c '
+latest=$(curl -fsSL --retry 3 --retry-delay 5 "https://update.code.visualstudio.com/api/update/$platform/$quality/latest" | python3 -c '
 import json, sys
 build = json.load(sys.stdin)
 print(build["url"], build["version"], build["sha256hash"], build["productVersion"])
@@ -62,7 +62,7 @@ fi
 echo "fetch-vscode: downloading $quality $version ($commit) for $platform" >&2
 download=$(mktemp)
 trap 'rm -f "$download"' EXIT
-curl -fsSL "$url" -o "$download"
+curl -fsSL --retry 3 --retry-delay 5 "$url" -o "$download"
 python3 - "$download" "$sha256" <<'PY'
 import hashlib, sys
 path, expected = sys.argv[1:]
