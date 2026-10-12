@@ -145,8 +145,8 @@
         },
 
         "path-join": {
-            "comment": "Path joins live outside option lists, between coordinates.",
-            "match": "(--|\\.\\.controls|\\|-|-\\|)",
+            "comment": "Path joins live outside option lists, between coordinates. A curve is written '.. controls (c) and (d) .. (y)', with or without the space after the dots, and the closing '..' is as much a join as the opening one. The dots are refused next to a third, so the '...' of a foreach list is not read as a curve.",
+            "match": "(--|(?<!\\.)\\.\\.(?:\\s*controls(?![\\w]))?(?!\\.)|\\|-|-\\|)",
             "name": "keyword.operator.path.tikz"
         },
 

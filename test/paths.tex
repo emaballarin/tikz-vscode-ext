@@ -3,6 +3,8 @@
 \begin{tikzpicture}
   \draw (a) .. controls (b) and (c) .. (d);
   \draw (a) ..controls (b)..(d);
+  \draw (a) .. controls +(1,0) and +(-1,0) .. (d);
+  \foreach \x in {1,...,5} \fill (\x,0) circle (1pt);
   \draw (a) to[bend left] (b) to (c);
   \draw (0,0) circle (1cm) (2,0) circle [radius=5mm];
   \draw (0,0) grid (2,2);
