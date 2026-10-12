@@ -151,14 +151,66 @@
         },
 
         "path-operator": {
+            "comment": "Most path operations are also English words, and node text is not excluded from this injection -- a label is host text inside the picture -- so a bare list of them coloured 'to' and 'in' in every label that used them. Each operation is therefore claimed only when it is followed by what the pgf manual says comes next: its options, a coordinate or a group, or a further keyword of its own syntax. A label that happens to read 'go to (a)' still lights up, which is the cost, and a small one. 'chain' is not a path operation at all -- 'start chain' is an option -- so it no longer appears.",
             "patterns": [
                 {
-                    "match": "(?<![\\\\\\w])(rectangle|circle|ellipse|arc|grid|parabola|cycle|coordinate|node|child|edge|foreach|graph|chain|decorate|plot|to|pic|svg|let|in)(?![\\w])",
+                    "comment": "A coordinate follows, possibly relative, or 'cycle' in its place; 'to' and 'edge' may take options and nodes first.",
+                    "match": "(?<![\\\\\\w])(?:rectangle|grid|to|edge)(?![\\w])(?=\\s*(?:[\\[(+]|node\\b|cycle\\b))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
-                    "comment": "'at' and 'and' are ordinary English, and node text is not excluded from this injection, so they are only claimed when a coordinate follows -- which is the only way TikZ ever uses them.",
-                    "match": "(?<![\\\\\\w])(at|and)(?![\\w])(?=\\s*\\()",
+                    "comment": "Options in the current syntax, a parenthesised radius or angles in the old one, or nothing before the path ends.",
+                    "match": "(?<![\\\\\\w])(?:circle|ellipse|arc)(?![\\w])(?=\\s*(?:[\\[(;]))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Options, a 'bend', or the end coordinate.",
+                    "match": "(?<![\\\\\\w])(?:parabola)(?![\\w])(?=\\s*(?:[\\[(+]|bend\\b|cycle\\b))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Closes the path, so the path ends or carries on with a join, a node or options.",
+                    "match": "(?<![\\\\\\w])(?:cycle)(?![\\w])(?=\\s*(?:;|-|\\.\\.|node\\b|coordinate\\b|\\[))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Options or the name.",
+                    "match": "(?<![\\\\\\w])(?:coordinate)(?![\\w])(?=\\s*(?:[\\[(]))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Options, a name, the text or pic type, 'at', 'foreach', or an animation; and 'node also'.",
+                    "match": "(?<![\\\\\\w])(?:node|pic)(?![\\w])(?=\\s*(?:[\\[({:]|at\\b|foreach\\b|also\\b))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Options, the child path, or 'foreach'.",
+                    "match": "(?<![\\\\\\w])(?:child)(?![\\w])(?=\\s*(?:[\\[{]|foreach\\b))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Options or the braced argument.",
+                    "match": "(?<![\\\\\\w])(?:graph|decorate|svg)(?![\\w])(?=\\s*(?:[\\[{]))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "Options, an expression, or the source of the points.",
+                    "match": "(?<![\\\\\\w])(?:plot)(?![\\w])(?=\\s*(?:[\\[(]|coordinates\\b|file\\b|function\\b))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "A variable: \\x, \\p1, \\n1.",
+                    "match": "(?<![\\\\\\w])(?:foreach|let)(?![\\w])(?=\\s*(?:\\\\))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "After 'foreach', the list; after 'let', the path that uses what was assigned.",
+                    "match": "(?<![\\\\\\w])(?:in)(?![\\w])(?=\\s*(?:[\\[({\\\\+]|node\\b|coordinate\\b))",
+                    "name": "keyword.control.path.tikz"
+                },
+                {
+                    "comment": "'node at (c)' and 'controls (c) and (d)'; the coordinate may be relative, as control points often are.",
+                    "match": "(?<![\\\\\\w])(?:at|and)(?![\\w])(?=\\s*(?:\\+{0,2}\\())",
                     "name": "keyword.control.path.tikz"
                 }
             ]

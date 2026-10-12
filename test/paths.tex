@@ -13,6 +13,13 @@
   \path (0,0) node {plain} coordinate (x);
   \draw (a) edge[->] (b);
   \foreach \x in {1,2} \draw (\x,0) -- +(1,0) -- ++(0,1);
+  \draw (0,0) ellipse (2cm and 1cm) (3,0) parabola bend (4,1) (5,0);
+  \draw plot coordinates {(0,0) (1,1)} plot[smooth] file {data.table};
+  \path let \p1 = (a) in (\p1) circle (1pt);
+  \node {root} child {node {leaf}} child foreach \x in {1,2} {node {\x}};
+  \draw decorate [decoration=zigzag] {(0,0) -- (1,0)} (2,0) svg {M 0 0 L 1 1};
+  \path pic (p) at (0,0) {angle} graph {a -> b} foreach \x in {1,2} {(\x,0) circle (1pt)};
+  \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
   \node {go to the store in town at noon};
   \node {a circle and a grid in a rectangle};
 \end{tikzpicture}

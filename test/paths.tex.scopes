@@ -47,6 +47,7 @@
         ","                      punctuation.separator.tikz
         "0"                      constant.numeric.tikz
         ")"                      punctuation.section.coordinate.end.tikz
+        "and"                    keyword.control.path.tikz
         "("                      punctuation.section.coordinate.begin.tikz
         "-1"                     constant.numeric.tikz
         ","                      punctuation.separator.tikz
@@ -231,18 +232,172 @@
         "1"                      constant.numeric.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  16    \node {go to the store in town at noon};
+  16    \draw (0,0) ellipse (2cm and 1cm) (3,0) parabola bend (4,1) (5,0);
         "\\"                     support.function.general.tex punctuation.definition.function.tex
-        "node"                   support.function.general.tex
-        "to"                     keyword.control.path.tikz
-        "in"                     keyword.control.path.tikz
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "ellipse"                keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "3"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "parabola"               keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "4"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "5"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  17    \node {a circle and a grid in a rectangle};
+  17    \draw plot coordinates {(0,0) (1,1)} plot[smooth] file {data.table};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
-        "node"                   support.function.general.tex
+        "draw"                   support.function.general.tex
+        "plot"                   keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "1"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "plot"                   keyword.control.path.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "smooth"                 support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        ";"                      punctuation.terminator.tikz
+  18    \path let \p1 = (a) in (\p1) circle (1pt);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "path"                   support.function.general.tex
+        "let"                    keyword.control.path.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "p"                      support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "a"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "in"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "p"                      support.function.general.tex
+        ")"                      punctuation.section.coordinate.end.tikz
         "circle"                 keyword.control.path.tikz
-        "grid"                   keyword.control.path.tikz
-        "in"                     keyword.control.path.tikz
-        "rectangle"              keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "pt"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  18  \end{tikzpicture}
+  19    \node {root} child {node {leaf}} child foreach \x in {1,2} {node {\x}};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        "child"                  keyword.control.path.tikz
+        "node"                   keyword.control.path.tikz
+        "child"                  keyword.control.path.tikz
+        "foreach"                keyword.control.path.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "x"                      support.function.general.tex
+        "in"                     keyword.control.path.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        "node"                   keyword.control.path.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "x"                      support.function.general.tex
+        ";"                      punctuation.terminator.tikz
+  20    \draw decorate [decoration=zigzag] {(0,0) -- (1,0)} (2,0) svg {M 0 0 L 1 1};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "decorate"               keyword.control.path.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "decoration"             entity.other.attribute-name.tikz variable.other.property.tikz
+        "="                      keyword.operator.assignment.tikz
+        "zigzag"                 support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "svg"                    keyword.control.path.tikz
+        "0"                      constant.numeric.tikz
+        "0"                      constant.numeric.tikz
+        "1"                      constant.numeric.tikz
+        "1"                      constant.numeric.tikz
+        ";"                      punctuation.terminator.tikz
+  21    \path pic (p) at (0,0) {angle} graph {a -> b} foreach \x in {1,2} {(\x,0) circle (1pt)};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "path"                   support.function.general.tex
+        "pic"                    keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "p"                      variable.other.coordinate.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "at"                     keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "graph"                  keyword.control.path.tikz
+        "foreach"                keyword.control.path.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "x"                      support.function.general.tex
+        "in"                     keyword.control.path.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "2"                      constant.numeric.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "x"                      support.function.general.tex
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "circle"                 keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.dimension.tikz
+        "pt"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  22    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        ","                      punctuation.separator.tikz
+        ","                      punctuation.separator.tikz
+        ","                      punctuation.separator.tikz
+        ","                      punctuation.separator.tikz
+        ";"                      punctuation.terminator.tikz
+  23    \node {go to the store in town at noon};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        ";"                      punctuation.terminator.tikz
+  24    \node {a circle and a grid in a rectangle};
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "node"                   support.function.general.tex
+        ";"                      punctuation.terminator.tikz
+  25  \end{tikzpicture}
