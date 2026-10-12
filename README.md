@@ -16,6 +16,14 @@ _The same two lines as the editor draws them: `\eps` is amber at its `\def` and 
 
 ## Install
 
+Take a build from [Releases](https://github.com/Atcold/tikz-vscode-ext/releases): `edge` is rebuilt on every push and always holds the newest commit, while `v*` tags cut fixed versions.
+
+```sh
+code --install-extension tikz-vscode-ext-edge.vsix
+```
+
+Or build it yourself — no npm, no vsce, just `tar`, `zip` and `python3`:
+
 ```sh
 ./tools/package
 code --install-extension tikz-vscode-ext-0.1.0.vsix

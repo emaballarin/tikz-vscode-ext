@@ -1,0 +1,218 @@
+# Test, package, publish -- in that order, each gated on the one before.
+#
+# The grammar is tested against VS Code's own TextMate engine and LaTeX grammar, taken from
+# the newest build of each quality rather than a pinned one. The latest Stable is what
+# people run today, so a difference there fails the run. The latest Insiders is what they
+# will run next: a difference there is reported as a warning in the run summary, and the
+# release goes out regardless. The recorded scopes keep only what our grammars assign, so
+# they move when TikZ highlighting moves, not when the host grammar reshuffles its tokens.
+#
+# Two release surfaces. A `v*` tag cuts an immutable Release at exactly that version. Every
+# other push to the default branch force-updates a single rolling prerelease called `edge`,
+# so the newest build always sits at one stable URL instead of accumulating a release per
+# commit. Pushes to other branches build and test but publish only a workflow artifact.
+#
+# The version in package.json is never edited here in a way that reaches git: a tag build
+# uses it as-is, and an edge build stamps `+ci.<run>.g<sha>` onto it in the working tree
+# only. The suffix is build metadata (`+`), not a prerelease (`-`), because VS Code reads
+# `0.1.0-dev.5` as older than `0.1.0` and refuses to install it over a release without
+# `--force`, whereas `0.1.0+ci.5` installs cleanly over both a release and a prior build.
+name: release
+
+on:
+    push:
+        branches: ["**"]
+        tags: ["v*"]
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+concurrency:
+    # One publish at a time, or two pushes race to recreate the `edge` release.
+    group: release-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  # tools/package pins the README's images to the commit that last touched
+                  # each, which needs the history.
+                  fetch-depth: 0
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: "22"
+
+            - name: Fetch the newest VS Code, Stable and Insiders
+              # Downloaded under .vscode-test/, which tools/package leaves out of the vsix.
+              # The smoke line fails here, rather than three steps on, if the runner lacks a
+              # library VS Code's Electron needs.
+              run: |
+                  stable=$(./tools/fetch-vscode stable)
+                  insider=$(./tools/fetch-vscode insider)
+                  {
+                    echo "VSCODE_STABLE=$stable"
+                    echo "VSCODE_INSIDER=$insider"
+                  } >> "$GITHUB_ENV"
+                  for app in "$stable" "$insider"; do
+                    VSCODE="$app" ./tools/tm -e 'console.log(`electron ${process.versions.electron}, node ${process.versions.node}`)'
+                  done
+
+            - name: Test, against the latest Stable
+              run: VSCODE="$VSCODE_STABLE" ./tools/test
+
+            - name: Check the grammar against the latest Insiders
+              # A canary: it warns, and never fails the run.
+              run: |
+                  log="$RUNNER_TEMP/canary.log"
+                  if VSCODE="$VSCODE_INSIDER" ./tools/tm tools/test-grammar.mjs > "$log" 2>&1; then
+                    cat "$log"
+                  else
+                    cat "$log"
+                    echo "::warning title=Insiders canary::the next VS Code changes TikZ highlighting; see the run summary"
+                    {
+                      echo "### The next VS Code changes TikZ highlighting"
+                      echo
+                      echo "The latest Insiders tokenises the fixtures differently from what is recorded. Stable still agrees, so this release is unaffected; look before Insiders becomes Stable."
+                      echo
+                      echo '```'
+                      head -200 "$log"
+                      echo '```'
+                    } >> "$GITHUB_STEP_SUMMARY"
+                  fi
+
+            - name: Decide the version
+              id: version
+              run: |
+                  base=$(python3 -c 'import json; print(json.load(open("package.json"))["version"])')
+                  if [ "${{ github.ref_type }}" = "tag" ]; then
+                    tag="${{ github.ref_name }}"
+                    want="${tag#v}"
+                    if [ "$want" != "$base" ]; then
+                      echo "::error::tag $tag disagrees with package.json version $base -- edit the version or retag"
+                      exit 1
+                    fi
+                    version="$base"
+                    channel="release"
+                  else
+                    version="$base+ci.${{ github.run_number }}.g$(git rev-parse --short HEAD)"
+                    channel="edge"
+                  fi
+                  {
+                    echo "version=$version"
+                    echo "channel=$channel"
+                  } >> "$GITHUB_OUTPUT"
+                  echo "building $version ($channel)"
+
+            - name: Stamp the version
+              # Working tree only. Nothing here is committed or pushed.
+              run: |
+                  python3 - "${{ steps.version.outputs.version }}" <<'PY'
+                  import json
+                  import pathlib
+                  import sys
+
+                  path = pathlib.Path("package.json")
+                  manifest = json.loads(path.read_text(encoding="utf-8"))
+                  manifest["version"] = sys.argv[1]
+                  path.write_text(json.dumps(manifest, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
+                  PY
+
+            - name: Package
+              id: package
+              run: |
+                  vsix=$(./tools/package | tail -1)
+                  echo "path=$vsix" >> "$GITHUB_OUTPUT"
+                  echo "name=$(basename "$vsix")" >> "$GITHUB_OUTPUT"
+                  python3 - "$vsix" "${{ steps.version.outputs.version }}" <<'PY'
+                  import sys
+                  import xml.etree.ElementTree as ElementTree
+                  import zipfile
+
+                  vsix, expected = sys.argv[1], sys.argv[2]
+                  with zipfile.ZipFile(vsix) as archive:
+                      document = ElementTree.fromstring(archive.read("extension.vsixmanifest"))
+                      names = archive.namelist()
+                  assert "extension/package.json" in names
+                  assert not any(".vscode-test" in name for name in names), "the downloaded VS Code was packaged"
+                  namespace = {"v": "http://schemas.microsoft.com/developer/vsx-schema/2011"}
+                  found = document.find(".//v:Identity", namespace).get("Version")
+                  assert found == expected, f"manifest says {found}, expected {expected}"
+                  print(f"{vsix} carries version {found}, {len(names)} files")
+                  PY
+
+            - name: Publish the tagged release
+              if: github.ref_type == 'tag'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  gh release create "${{ github.ref_name }}" \
+                    --title "${{ github.ref_name }}" \
+                    --generate-notes \
+                    "${{ steps.package.outputs.path }}#${{ steps.package.outputs.name }}"
+
+            - name: Publish the rolling edge build
+              if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  # A stable asset name, so the newest edge build always lives at the same URL.
+                  asset="tikz-vscode-ext-edge.vsix"
+                  cp "${{ steps.package.outputs.path }}" "$asset"
+                  # Delete and recreate rather than edit: the tag has to move to this commit.
+                  gh release delete edge --yes --cleanup-tag || true
+                  gh release create edge \
+                    --prerelease \
+                    --target "$GITHUB_SHA" \
+                    --title "Edge build" \
+                    --notes "Built from \`${GITHUB_SHA:0:7}\` on \`${{ github.ref_name }}\`, run ${{ github.run_number }}.
+
+                  Version \`${{ steps.version.outputs.version }}\`. This is a rolling prerelease: it is replaced on every push, and the download URL below is stable.
+
+                  \`\`\`sh
+                  code --install-extension $asset
+                  \`\`\`" \
+                    "$asset"
+
+            - name: Upload the build for a non-default branch
+              if: github.ref_type == 'branch' && github.ref_name != github.event.repository.default_branch
+              uses: actions/upload-artifact@v7
+              with:
+                  name: ${{ steps.package.outputs.name }}
+                  path: ${{ steps.package.outputs.path }}
+
+            - name: Summary
+              if: always()
+              run: |
+                  # The build in a fetched installation: Linux puts product.json under
+                  # resources/, a macOS bundle under Contents/Resources/.
+                  build() {
+                    for f in "$1/resources/app/product.json" "$1/Contents/Resources/app/product.json"; do
+                      if [ -n "$1" ] && [ -f "$f" ]; then
+                        python3 - "$f" <<'PY'
+                  import json
+                  import pathlib
+                  import sys
+
+                  product = pathlib.Path(sys.argv[1])
+                  p = json.loads(product.read_text(encoding="utf-8"))
+                  version = json.loads((product.parent / "package.json").read_text(encoding="utf-8"))["version"]
+                  print(f"{p['nameLong']} {version} ({p['commit'][:7]})")
+                  PY
+                        return 0
+                      fi
+                    done
+                  }
+                  {
+                    echo "| | |"
+                    echo "|---|---|"
+                    echo "| version | \`${{ steps.version.outputs.version }}\` |"
+                    echo "| channel | ${{ steps.version.outputs.channel }} |"
+                    echo "| commit | \`${GITHUB_SHA:0:7}\` |"
+                    echo "| tested on | $(build "$VSCODE_STABLE") |"
+                    echo "| canary | $(build "$VSCODE_INSIDER") |"
+                  } >> "$GITHUB_STEP_SUMMARY"

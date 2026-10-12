@@ -50,6 +50,8 @@ Two tools run the real VS Code TextMate engine, so what they print is exactly wh
 
 `./tools/test` holds the grammar to what it produced last: every fixture in `test/` is tokenised and compared with the `.scopes` file beside it. Only the scopes this grammar assigns are recorded, merged over runs of text, so a new VS Code fails it only where it changes TikZ highlighting, not where the stock LaTeX grammar merely splits its tokens differently. After a deliberate change, re-record with `./tools/tm tools/test-grammar.mjs --update` and read the diff of the `.scopes` files: that diff is the change, as the editor will show it.
 
+`.github/workflows/release.yml` runs `./tools/test` on every push against the newest VS Code Stable, which gates the release, and the grammar half again against the newest Insiders, which only warns: Stable is what people run today, Insiders what they will run next. `./tools/fetch-vscode stable|insider` downloads either for a local run, and prints the folder to point `VSCODE` at.
+
 `test/spacing.tex` is the regression case for the spacing rule, and its first node is the control: spacing _inside_ a formula must stay part of the one flat string, which the `-string` negation is what guarantees.
 
 `test/calc.tex` is the regression case for calc coordinates: every dollar in it is a delimiter, and the last lines are the control — real maths, which must still come out as `string.other.math.tikz`.
