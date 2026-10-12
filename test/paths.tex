@@ -27,6 +27,16 @@
   \draw decorate {(0,0) -- (1,1) -- cycle};
   \node {\includegraphics{../plots/a.pdf}};
   \node {wait.. what};
+  \draw (0,0) rectangle % the frame
+    (1,1) .. % a curve, its control points below
+    controls +(1,0) and +(0,1) .. (2,2);
+  \node {duty cycle (\%)} node {cycle + 1} node {go into cycle mode};
+  % The known cost: an operation's name ending a line of wrapped node text is taken for
+  % a path that goes on below, which a lookahead cannot tell apart.
+  % And text that reads as TikZ's own syntax: 'to cycle' closes a path.
+  \node {press to cycle};
+  \node [text width=4cm] {We go from here to
+    there and back};
   \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
   \node {go to the store in town at noon};
   \node {a circle and a grid in a rectangle};
