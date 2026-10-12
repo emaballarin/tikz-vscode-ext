@@ -175,9 +175,10 @@ def strip_jsonc(text):
     out, i = [], 0
     while i < len(text):
         if text[i] == '"':
+            # Step over each escape whole, so a string ending in \\ still ends.
             j = i + 1
-            while text[j] != '"' or text[j - 1] == "\\":
-                j += 1
+            while text[j] != '"':
+                j += 2 if text[j] == "\\" else 1
             out.append(text[i : j + 1])
             i = j + 1
         elif text.startswith("//", i):

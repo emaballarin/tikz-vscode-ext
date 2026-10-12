@@ -21,6 +21,8 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ElementTree
 import zipfile
+from importlib.machinery import SourceFileLoader
+from importlib.util import module_from_spec, spec_from_loader
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -125,6 +127,8 @@ def package(tree):
 NAMESPACE = {"v": "http://schemas.microsoft.com/developer/vsx-schema/2011"}
 
 BEFORE = digest(ROOT)
+# A vsix the person running this built themselves is theirs; only a new one is ours.
+VSIX_BEFORE = set(ROOT.glob("*.vsix"))
 
 
 @test("every script under tools/ is executable and has a shebang")
@@ -185,12 +189,34 @@ def _():
     def drop_icon(tree):
         (tree / "images" / "icon.png").unlink()
 
+    def rainbow_tikz(tree):
+        path = tree / "settings-snippet.jsonc"
+        path.write_text(path.read_text(encoding="utf-8").replace('"[tikz]"', '"[tikz-unrelated]"', 1))
+
+    def drop_activation(tree):
+        edit_json(tree / "package.json", lambda m: m["activationEvents"].remove("onLanguage:tikz"))
+
+    def mistype_token(tree):
+        edit_json(tree / "package.json", lambda m: m["contributes"]["semanticTokenTypes"][0].update(id="tikzMacros"))
+
     broken(drop_grammar, "grammar ./syntaxes/tikz-toplevel.tmLanguage.json is missing")
     broken(break_include, "includes #dimensions, which its repository lacks")
     broken(misstate_default, "README gives tikz.figureScript the default ./figure.sh")
     broken(orphan_command, "command tikz.ghost is declared but never registered")
     broken(unread_setting, "setting tikz.ghost is declared but nothing reads it")
     broken(drop_icon, "is missing")
+    broken(rainbow_tikz, "leaves bracket pair colours on for [tikz]")
+    broken(drop_activation, "no onLanguage:tikz activation event")
+    broken(mistype_token, "semantic token types")
+
+
+@test("tools/check reads JSONC whose strings end in an escaped backslash")
+def _():
+    loader = SourceFileLoader("check", str(ROOT / "tools" / "check"))
+    module = module_from_spec(spec_from_loader(loader.name, loader))
+    loader.exec_module(module)
+    text = '{\n  // a comment\n  "path": "C:\\\\", /* and another */ "next": "a // b",\n}'
+    assert json.loads(module.strip_jsonc(text)) == {"path": "C:\\", "next": "a // b"}
 
 
 @test("tools/package builds an installable vsix from a copy of the tree")
@@ -329,6 +355,10 @@ def _():
         child.write_text(
             json.dumps(
                 {
+                    # A string ending in an escaped backslash, then one holding "//": a
+                    # stripper that misreads the first takes the second for a comment.
+                    "name": "ends in a backslash \\",
+                    "$schema": "vscode://schemas/color-theme",
                     "include": "./base.json",
                     "tokenColors": [{"scope": "constant.numeric", "settings": {"foreground": "#ff8800"}}],
                 }
@@ -384,7 +414,7 @@ def _():
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"
-    assert not list(ROOT.glob("*.vsix")), "a vsix was left in the tree"
+    assert set(ROOT.glob("*.vsix")) == VSIX_BEFORE, "a vsix was left in the tree"
 
 
 if failures:

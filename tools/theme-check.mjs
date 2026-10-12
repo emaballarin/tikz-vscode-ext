@@ -43,8 +43,9 @@ function strip(text) {
     for (let i = 0; i < text.length;) {
         const c = text[i];
         if (c === '"') {
+            // Step over each escape whole, so a string ending in \\ still ends.
             let j = i + 1;
-            while (j < text.length && !(text[j] === '"' && text[j - 1] !== "\\")) j++;
+            while (j < text.length && text[j] !== '"') j += text[j] === "\\" ? 2 : 1;
             out += text.slice(i, j + 1);
             i = j + 1;
         } else if (c === "/" && text[i + 1] === "/") {
