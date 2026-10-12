@@ -35,6 +35,12 @@
   % a path that goes on below, which a lookahead cannot tell apart.
   % And text that reads as TikZ's own syntax: 'to cycle' closes a path.
   \node {press to cycle};
+  % at, and and controls take no line end, being the commonest English of the lot: a
+  % wrapped label ending in one stays plain, and so, at that price, does a path line.
+  \node [text width=4cm] {salt and
+    pepper};
+  \draw (a) .. controls (b) and
+    (c) .. (d);
   \node [text width=4cm] {We go from here to
     there and back};
   \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};

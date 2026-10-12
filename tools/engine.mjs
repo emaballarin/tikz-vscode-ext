@@ -99,8 +99,9 @@ export async function grammarFor(reg, file) {
 
 /**
  * Every scope name this extension's grammars can assign, as written in their rules. Some
- * are borrowed from the host on purpose -- a macro inside an option list is scoped as the
- * host scopes one outside it -- and those count as ours too: we put them there.
+ * are borrowed from the host on purpose -- a macro inside an option list or a calc
+ * coordinate, and the command opening a keyset block or an inline \tikz, are scoped as the
+ * host scopes a control sequence -- and those count as ours too: we put them there.
  * @returns {Set<string>}
  */
 export function ourScopes() {
