@@ -497,17 +497,48 @@
         "0"                      constant.numeric.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  29    \node {\includegraphics{../plots/a.pdf}};
+  29    \draw (0,0) -- (1,0) to[bend left] cycle (2,0) -- (3,0);
+        "\\"                     support.function.general.tex punctuation.definition.function.tex
+        "draw"                   support.function.general.tex
+        "("                      punctuation.section.coordinate.begin.tikz
+        "0"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "1"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "to"                     keyword.control.path.tikz
+        "["                      punctuation.section.options.begin.tikz
+        "bend left"              support.function.tikz entity.name.function.tikz
+        "]"                      punctuation.section.options.end.tikz
+        "cycle"                  keyword.control.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "2"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        "--"                     keyword.operator.path.tikz
+        "("                      punctuation.section.coordinate.begin.tikz
+        "3"                      constant.numeric.tikz
+        ","                      punctuation.separator.tikz
+        "0"                      constant.numeric.tikz
+        ")"                      punctuation.section.coordinate.end.tikz
+        ";"                      punctuation.terminator.tikz
+  30    \node {\includegraphics{../plots/a.pdf}};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "includegraphics"        support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  30    \node {wait.. what};
+  31    \node {wait.. what};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  31    \draw (0,0) rectangle % the frame
+  32    \draw (0,0) rectangle % the frame
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "draw"                   support.function.general.tex
         "("                      punctuation.section.coordinate.begin.tikz
@@ -516,14 +547,14 @@
         "0"                      constant.numeric.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         "rectangle"              keyword.control.path.tikz
-  32      (1,1) .. % a curve, its control points below
+  33      (1,1) .. % a curve, its control points below
         "("                      punctuation.section.coordinate.begin.tikz
         "1"                      constant.numeric.tikz
         ","                      punctuation.separator.tikz
         "1"                      constant.numeric.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ".."                     keyword.operator.path.tikz
-  33      controls +(1,0) and +(0,1) .. (2,2);
+  34      controls +(1,0) and +(0,1) .. (2,2);
         "controls"               keyword.control.path.tikz
         "("                      punctuation.section.coordinate.begin.tikz
         "1"                      constant.numeric.tikz
@@ -543,7 +574,7 @@
         "2"                      constant.numeric.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  34    \node {duty cycle (\%)} node {cycle + 1} node {go into cycle mode};
+  35    \node {duty cycle (\%)} node {cycle + 1} node {go into cycle mode};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "("                      punctuation.section.coordinate.begin.tikz
@@ -552,18 +583,18 @@
         "1"                      constant.numeric.tikz
         "node"                   keyword.control.path.tikz
         ";"                      punctuation.terminator.tikz
-  35    % The known cost: an operation's name ending a line of wrapped node text is taken for
-  36    % a path that goes on below, which a lookahead cannot tell apart.
-  37    % And text that reads as TikZ's own syntax: 'to cycle' closes a path.
-  38    \node {press to cycle};
+  36    % The known cost: an operation's name ending a line of wrapped node text is taken for
+  37    % a path that goes on below, which a lookahead cannot tell apart.
+  38    % And text that reads as TikZ's own syntax: 'to cycle' closes a path.
+  39    \node {press to cycle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "to"                     keyword.control.path.tikz
         "cycle"                  keyword.control.path.tikz
         ";"                      punctuation.terminator.tikz
-  39    % at, and and controls take no line end, being the commonest English of the lot: a
-  40    % wrapped label ending in one stays plain, and so, at that price, does a path line.
-  41    \node [text width=4cm] {salt and
+  40    % at, and and controls take no line end, being the commonest English of the lot: a
+  41    % wrapped label ending in one stays plain, and so, at that price, does a path line.
+  42    \node [text width=4cm] {salt and
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "["                      punctuation.section.options.begin.tikz
@@ -572,9 +603,9 @@
         "4"                      constant.numeric.dimension.tikz
         "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
         "]"                      punctuation.section.options.end.tikz
-  42      pepper};
+  43      pepper};
         ";"                      punctuation.terminator.tikz
-  43    \node [text width=4cm] {look at
+  44    \node [text width=4cm] {look at
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "["                      punctuation.section.options.begin.tikz
@@ -583,11 +614,11 @@
         "4"                      constant.numeric.dimension.tikz
         "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
         "]"                      punctuation.section.options.end.tikz
-  44      this knob, which controls
+  45      this knob, which controls
         ","                      punctuation.separator.tikz
-  45      the gain};
+  46      the gain};
         ";"                      punctuation.terminator.tikz
-  46    \draw (a) .. controls (b) and
+  47    \draw (a) .. controls (b) and
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "draw"                   support.function.general.tex
         "("                      punctuation.section.coordinate.begin.tikz
@@ -597,7 +628,7 @@
         "("                      punctuation.section.coordinate.begin.tikz
         "b"                      variable.other.coordinate.tikz
         ")"                      punctuation.section.coordinate.end.tikz
-  47      (c) .. (d);
+  48      (c) .. (d);
         "("                      punctuation.section.coordinate.begin.tikz
         "c"                      variable.other.coordinate.tikz
         ")"                      punctuation.section.coordinate.end.tikz
@@ -606,7 +637,7 @@
         "d"                      variable.other.coordinate.tikz
         ")"                      punctuation.section.coordinate.end.tikz
         ";"                      punctuation.terminator.tikz
-  48    \node [text width=4cm] {We go from here to
+  49    \node [text width=4cm] {We go from here to
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         "["                      punctuation.section.options.begin.tikz
@@ -616,9 +647,9 @@
         "cm"                     constant.numeric.dimension.tikz keyword.other.unit.tikz
         "]"                      punctuation.section.options.end.tikz
         "to"                     keyword.control.path.tikz
-  49      there and back};
+  50      there and back};
         ";"                      punctuation.terminator.tikz
-  50    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
+  51    \node {plot a graph, decorate the svg, let it in, pick a pic, then cycle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ","                      punctuation.separator.tikz
@@ -626,12 +657,12 @@
         ","                      punctuation.separator.tikz
         ","                      punctuation.separator.tikz
         ";"                      punctuation.terminator.tikz
-  51    \node {go to the store in town at noon};
+  52    \node {go to the store in town at noon};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  52    \node {a circle and a grid in a rectangle};
+  53    \node {a circle and a grid in a rectangle};
         "\\"                     support.function.general.tex punctuation.definition.function.tex
         "node"                   support.function.general.tex
         ";"                      punctuation.terminator.tikz
-  53  \end{tikzpicture}
+  54  \end{tikzpicture}
