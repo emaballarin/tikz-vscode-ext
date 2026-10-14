@@ -166,16 +166,17 @@ function activeFigure(figureFolders) {
  * passes a megabyte -- so a script leaving latexmk's output on the terminal was stopped
  * halfway through a build. Nothing here shows the output, so none is collected.
  * @param {{file: string, args: string[], cwd: string}} plan
+ * @param {number} [timeoutMs] how long the script may run; a parameter so a test need not wait
  * @returns {Promise<{code: number | null, signal: string | null, error: Error | null, timedOut: boolean}>}
  */
-function run(plan) {
+function run(plan, timeoutMs = TIMEOUT_MS) {
     return new Promise((resolve) => {
         const child = spawn(plan.file, plan.args, { cwd: plan.cwd, stdio: "ignore" });
         let timedOut = false;
         const timer = setTimeout(() => {
             timedOut = true;
             child.kill();
-        }, TIMEOUT_MS);
+        }, timeoutMs);
         // A script that cannot start raises "error" and may never raise "exit"; the
         // first of the two settles the promise.
         child.on("error", (error) => {
@@ -373,4 +374,5 @@ async function onPath(name) {
     return null;
 }
 
-module.exports = { runBuildAndReport, viewAndReport };
+// run and failure are exported for the tests, which hold the time limit without waiting it out.
+module.exports = { runBuildAndReport, viewAndReport, run, failure };

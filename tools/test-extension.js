@@ -505,6 +505,22 @@ test("a script stopped by a signal says so rather than quoting an exit code", as
     assert.deepStrictEqual(messages, [["error", "build was stopped by SIGTERM"]]);
 });
 
+test("a script that outlives the time limit is stopped, and said to have timed out", async () => {
+    // The real limit is ten minutes; run() takes it as a parameter so this need not wait.
+    const root = folder({ "build.sh": script("sleep 1; echo late > late") });
+    const started = Date.now();
+    const result = await build.run({ file: path.join(root, "build.sh"), args: [], cwd: root }, 200);
+    assert.ok(Date.now() - started < 900, "it was not stopped at the limit");
+    assert.strictEqual(result.timedOut, true);
+    // Past the point where the script would have written, had it not been stopped.
+    await new Promise((r) => setTimeout(r, 1300));
+    assert.ok(!fs.existsSync(path.join(root, "late")), "the script ran on past the limit");
+    assert.strictEqual(
+        build.failure({ script: "./build.sh", label: "build" }, result),
+        "build timed out after 10 minutes"
+    );
+});
+
 test("with no script anywhere, the build asks for one and can show the example", async () => {
     const root = folder({});
     state.answer = "Show example";
