@@ -1,6 +1,7 @@
 # Test, package, publish -- in that order, each gated on the one before.
 #
-# The tests run on Linux and on macOS; the macOS job has to pass before anything is published.
+# The tests run on Linux and on macOS. The Linux job runs whatever macOS says, so its own
+# results are always there to read, but it publishes nothing unless macOS passed.
 #
 # The grammar is tested against VS Code's own TextMate engine and LaTeX grammar, taken from
 # the newest build of each quality rather than a pinned one. The latest Stable is what
@@ -60,8 +61,25 @@ jobs:
             - name: Test, against the latest Stable, on macOS
               run: VSCODE="$VSCODE_STABLE" ./tools/test
 
+            - name: Summary
+              if: always() && env.VSCODE_STABLE != ''
+              run: |
+                  python3 - "$VSCODE_STABLE" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+                  import json
+                  import pathlib
+                  import sys
+
+                  app = pathlib.Path(sys.argv[1]) / "Contents" / "Resources" / "app"
+                  product = json.loads((app / "product.json").read_text(encoding="utf-8"))
+                  version = json.loads((app / "package.json").read_text(encoding="utf-8"))["version"]
+                  print(f"macOS: tested on {product['nameLong']} {version} ({product['commit'][:7]})")
+                  PY
+
     build:
         needs: macos
+        # Run even when macOS failed, so the Linux results are there; only publishing waits
+        # on macOS having passed.
+        if: ${{ !cancelled() }}
         runs-on: ubuntu-latest
         # A run takes a few minutes; this only bounds one that hangs, well short of six hours,
         # with room for the canary's own ten on top of everything else.
@@ -192,7 +210,7 @@ jobs:
                   PY
 
             - name: Publish the tagged release
-              if: github.ref_type == 'tag'
+              if: github.ref_type == 'tag' && needs.macos.result == 'success'
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
@@ -202,7 +220,7 @@ jobs:
                     "${{ steps.package.outputs.path }}#${{ steps.package.outputs.name }}"
 
             - name: Publish the rolling edge build
-              if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch
+              if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch && needs.macos.result == 'success'
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
@@ -278,6 +296,7 @@ jobs:
                     echo "| version | \`${{ steps.version.outputs.version }}\` |"
                     echo "| channel | ${{ steps.version.outputs.channel }} |"
                     echo "| commit | \`${GITHUB_SHA:0:7}\` |"
+                    echo "| macOS | ${{ needs.macos.result }} |"
                     echo "| tested on | $(build "$VSCODE_STABLE") |"
                     echo "| canary | $(build "$VSCODE_INSIDER") ${CANARY:-did not run, or did not finish} |"
                   } >> "$GITHUB_STEP_SUMMARY"
