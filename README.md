@@ -16,7 +16,7 @@ _The same two lines as the editor draws them: `\eps` is amber at its `\def` and 
 
 ## Install
 
-Take a build from [Releases](https://github.com/Atcold/tikz-vscode-ext/releases): `edge` is rebuilt on every push to the default branch and always holds its newest commit, while `v*` tags cut fixed versions.
+Take a build from [Releases](../../releases): `edge` is rebuilt on every push to the default branch and always holds its newest commit, while `v*` tags cut fixed versions.
 
 ```sh
 code --install-extension tikz-vscode-ext-edge.vsix

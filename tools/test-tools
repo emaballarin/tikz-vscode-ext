@@ -346,6 +346,20 @@ def _():
         assert "extension/docs" in names and not any(n.startswith("extension/docs/") for n in names), names
 
 
+@test("tools/package points the README's links at the repository it is built from")
+def _():
+    # Releases are published by the workflow wherever it runs, a fork included, so the link
+    # to them has to follow the checkout's origin rather than name one repository for good.
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = copy_tree(Path(tmp) / "tree")
+        subprocess.run(["git", "remote", "set-url", "origin", "git@github.com:someone/fork.git"], cwd=tree, check=True)
+        vsix, _ = package(tree)
+        with zipfile.ZipFile(vsix) as archive:
+            readme = archive.read("extension/README.md").decode("utf-8")
+        assert "](https://github.com/someone/fork/releases)" in readme, "the Releases link does not follow origin"
+        assert "](../../" not in readme, "a repository-relative link would be broken on the extension page"
+
+
 @test("tools/package decodes the manifest as JSON and writes it as XML")
 def _():
     # A sed capture copies `\\` where package.json means one backslash, and an `&` or a `<`

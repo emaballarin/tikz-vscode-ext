@@ -118,6 +118,13 @@ for img in $(sed -n 's/.*](\(images\/[^)]*\)).*/\1/p' README.md | sort -u); do
   fi
 done
 
+# Links relative to the repository page -- ../../releases -- resolve on GitHub, in whichever
+# repository holds the file, and nowhere else. The repository is the one the vsix is built
+# from, which is where the workflow publishes the releases they point at.
+if [ -n "$slug" ]; then
+  edit "s|](\.\./\.\./\([^)]*\))|](https://github.com/${slug}/\1)|g" "$stage/extension/README.md"
+fi
+
 cat > "$stage/extension.vsixmanifest" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
