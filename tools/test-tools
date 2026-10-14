@@ -487,6 +487,33 @@ def _():
         assert "RUNAWAY" not in result.stdout, result.stdout
 
 
+@test("tools/tm runs the executable of a macOS bundle, Stable or Insiders")
+def _():
+    # Shaped as the real bundles are: product.json names the executable "VSCode" or
+    # "VSCodeInsiders" in darwinExecutable, but the file in Contents/MacOS is called by the
+    # nameShort, "Code" or "Code - Insiders". The bundles are stand-ins that report how they
+    # were run, so this holds on Linux as well.
+    for name_short, darwin_executable in (("Code", "VSCode"), ("Code - Insiders", "VSCodeInsiders")):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / f"Visual Studio {name_short}.app"
+            (bundle / "Contents" / "Resources" / "app").mkdir(parents=True)
+            (bundle / "Contents" / "MacOS").mkdir()
+            product = {"nameShort": name_short, "darwinExecutable": darwin_executable}
+            (bundle / "Contents" / "Resources" / "app" / "product.json").write_text(json.dumps(product, indent=2))
+            executable = bundle / "Contents" / "MacOS" / name_short
+            executable.write_text('#!/bin/sh\necho "ran as node=$ELECTRON_RUN_AS_NODE with $*"\n')
+            executable.chmod(0o755)
+            result = subprocess.run(
+                [str(ROOT / "tools" / "tm"), "script.mjs"],
+                env={**os.environ, "VSCODE": str(bundle)},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            assert result.returncode == 0, f"{name_short}: exit {result.returncode}: {result.stderr.strip()}"
+            assert result.stdout.strip() == "ran as node=1 with script.mjs", f"{name_short}: {result.stdout}"
+
+
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"

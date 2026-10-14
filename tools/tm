@@ -9,19 +9,27 @@
 # in turn, Stable before Insiders.
 set -e
 
-# The executable inside an installation, or nothing. Both platforms name it in
-# product.json; a bundle too old to say is tried under the names it has carried.
+# The executable inside an installation, or nothing. On Linux product.json names it as
+# applicationName. A macOS bundle calls it by the nameShort -- Code, or Code - Insiders --
+# whatever its darwinExecutable says (VSCode, VSCodeInsiders: no such file in either), and
+# a bundle that says neither is taken at its only executable.
 binary() {
   if [ -f "$1" ] && [ -x "$1" ]; then
     echo "$1"
   elif [ -d "$1/Contents/MacOS" ]; then
-    name=$(sed -n 's/.*"darwinExecutable": *"\([^"]*\)".*/\1/p' "$1/Contents/Resources/app/product.json" 2>/dev/null | head -1)
-    for candidate in "$name" Electron Code; do
-      if [ -n "$candidate" ] && [ -x "$1/Contents/MacOS/$candidate" ]; then
-        echo "$1/Contents/MacOS/$candidate"
-        return
+    name=$(sed -n 's/.*"nameShort": *"\([^"]*\)".*/\1/p' "$1/Contents/Resources/app/product.json" 2>/dev/null | head -1)
+    if [ -n "$name" ] && [ -f "$1/Contents/MacOS/$name" ] && [ -x "$1/Contents/MacOS/$name" ]; then
+      echo "$1/Contents/MacOS/$name"
+      return
+    fi
+    only=""
+    for candidate in "$1"/Contents/MacOS/*; do
+      if [ -f "$candidate" ] && [ -x "$candidate" ]; then
+        [ -n "$only" ] && return
+        only=$candidate
       fi
     done
+    [ -n "$only" ] && echo "$only"
   elif [ -f "$1/resources/app/product.json" ]; then
     name=$(sed -n 's/.*"applicationName": *"\([^"]*\)".*/\1/p' "$1/resources/app/product.json" | head -1)
     if [ -n "$name" ] && [ -x "$1/$name" ]; then
