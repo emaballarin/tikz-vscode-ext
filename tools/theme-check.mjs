@@ -87,14 +87,11 @@ function load(file, seen = new Set()) {
     seen.add(full);
 
     const theme = JSON.parse(strip(fs.readFileSync(full, "utf8")));
-    // tokenColors may name a file instead of listing the rules. A JSON one is read; a
-    // .tmTheme is a plist, which this does not read, and is said so rather than taken as
-    // a theme with no rules.
+    // tokenColors may name a file instead of listing the rules, which VS Code reads as a
+    // TextMate theme -- a plist -- whatever it is called. This does not read plists, and
+    // says so rather than take the theme for one with no rules.
     if (typeof theme.tokenColors === "string") {
-        const rules = path.join(path.dirname(full), theme.tokenColors);
-        if (!rules.endsWith(".json")) bail(`${file} keeps its rules in ${theme.tokenColors}, which is not JSON`);
-        const read = JSON.parse(strip(fs.readFileSync(rules, "utf8")));
-        theme.tokenColors = Array.isArray(read) ? read : (read.tokenColors ?? []);
+        bail(`${file} keeps its rules in ${theme.tokenColors}, a TextMate theme, which theme-check does not read`);
     }
     if (!theme.include) return theme;
 
@@ -107,11 +104,40 @@ function load(file, seen = new Set()) {
     };
 }
 
+// A colour as VS Code reads one from a theme: #rgb and #rgba spelt out in full, anything
+// else not a colour at all. vscode-textmate keeps a colour as written, so this is applied
+// before the theme reaches it.
+function normal(c) {
+    if (typeof c !== "string" || !/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(c)) return undefined;
+    const digits = c.length <= 5 ? [...c.slice(1)].map((d) => d + d).join("") : c.slice(1);
+    return `#${digits.toLowerCase()}`;
+}
+
 // A rule that matches is not the same as a colour you can see. Monokai styles bare
 // `variable` as #F8F8F2, which is its editor foreground, so a scope resolving through it
 // reads as ordinary text -- the failure this whole table exists to prevent, and the one a
 // match/no-match check walks straight past. Alpha is dropped: it does not make text stand out.
-const colour = (c) => (c ?? "").slice(0, 7).toLowerCase();
+const colour = (c) => (normal(c) ?? "").slice(0, 7);
+
+// The editor foreground VS Code registers for a theme that sets none, by kind of theme.
+const DEFAULT_FOREGROUND = { light: "#333333", dark: "#bbbbbb", hcDark: "#ffffff", hcLight: "#292929" };
+
+/** The kind of theme, from a contribution's uiTheme or the theme file's own type. */
+function kind(uiTheme, type) {
+    const named = { vs: "light", "vs-dark": "dark", "hc-black": "hcDark", "hc-light": "hcLight" }[uiTheme];
+    if (named) return named;
+    return (
+        {
+            light: "light",
+            dark: "dark",
+            hc: "hcDark",
+            "hc-black": "hcDark",
+            hcDark: "hcDark",
+            "hc-light": "hcLight",
+            hcLight: "hcLight",
+        }[type] ?? "dark"
+    );
+}
 
 /**
  * The colour of each kind of token in `rows`, and of plain text around them, as the
@@ -155,14 +181,33 @@ async function colours(theme, rows, root, around) {
     return { rows: found.slice(0, -1), base: found.at(-1) };
 }
 
-/** A theme as vscode-textmate takes it: the editor's colours first, then the rules. */
-function rawTheme(theme) {
+/**
+ * A theme as the editor hands it to vscode-textmate: the editor colours first -- the
+ * registered default for the kind of theme when it sets no foreground -- then every rule
+ * that has a scope. A rule without one is dropped there, not applied to everything.
+ */
+function rawTheme(theme, uiTheme) {
     const colors = theme.colors ?? {};
+    const rules = (theme.tokenColors ?? [])
+        .filter((rule) => rule?.scope && rule.settings)
+        .map((rule) => ({
+            scope: rule.scope,
+            settings: {
+                foreground: normal(rule.settings.foreground),
+                background: normal(rule.settings.background),
+                fontStyle: rule.settings.fontStyle,
+            },
+        }));
     return {
         name: theme.name ?? "theme",
         settings: [
-            { settings: { foreground: colors["editor.foreground"], background: colors["editor.background"] } },
-            ...(theme.tokenColors ?? []),
+            {
+                settings: {
+                    foreground: normal(colors["editor.foreground"]) ?? DEFAULT_FOREGROUND[kind(uiTheme, theme.type)],
+                    background: normal(colors["editor.background"]),
+                },
+            },
+            ...rules,
         ],
     };
 }
@@ -175,11 +220,10 @@ function rawTheme(theme) {
  */
 function currentTheme() {
     const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
-    // Under tools/tm the running VS Code says where its own settings and extensions live:
-    // Insiders keeps them under "Code - Insiders" and ~/.vscode-insiders, not Code and
-    // ~/.vscode. Under a plain node, assume Stable.
+    // The running VS Code says where its own settings and extensions live: Insiders keeps
+    // them under "Code - Insiders" and ~/.vscode-insiders, not Code and ~/.vscode.
     const vscode = findVSCode();
-    const folder = vscode?.product.nameShort ?? "Code";
+    const folder = vscode.product.nameShort;
     const settings =
         {
             darwin: path.join(home, "Library/Application Support", folder, "User/settings.json"),
@@ -197,15 +241,7 @@ function currentTheme() {
     // A theme is contributed by an extension, under a label that need not resemble the
     // file name -- "Aether Neptune" lives in aether-neptune.json, but "Default Dark+"
     // lives in dark_plus.json. The manifests are the only mapping there is.
-    const roots = [
-        path.join(home, vscode?.product.dataFolderName ?? ".vscode", "extensions"),
-        vscode ?
-            path.join(vscode.app, "extensions")
-        :   ({
-                darwin: "/Applications/Visual Studio Code.app/Contents/Resources/app/extensions",
-                win32: path.join(process.env.LOCALAPPDATA ?? "", "Programs/Microsoft VS Code/resources/app/extensions"),
-            }[process.platform] ?? "/usr/share/code/resources/app/extensions"),
-    ];
+    const roots = [path.join(home, vscode.product.dataFolderName, "extensions"), path.join(vscode.app, "extensions")];
 
     for (const root of roots) {
         let entries = [];
@@ -225,7 +261,7 @@ function currentTheme() {
             for (const theme of contributed) {
                 if (theme.label === label || theme.id === label) {
                     console.log(`\x1b[2m${label}\x1b[0m`);
-                    return [path.join(root, entry, theme.path)];
+                    return [{ file: path.join(root, entry, theme.path), uiTheme: theme.uiTheme }];
                 }
             }
         }
@@ -238,23 +274,29 @@ function bail(message) {
     process.exit(1);
 }
 
-const files = process.argv.length > 2 ? process.argv.slice(2) : currentTheme();
+// engine.mjs, imported above, has already refused to run anywhere but under tools/tm.
+const files = process.argv.length > 2 ? process.argv.slice(2).map((file) => ({ file, uiTheme: null })) : currentTheme();
 
-if (!findVSCode()) bail("run this through tools/tm, which lends it VS Code's own matcher");
-
-for (const file of files) {
-    const theme = rawTheme(load(file));
+for (const { file, uiTheme } of files) {
+    const theme = rawTheme(load(file), uiTheme);
     const picture = await colours(theme, SCOPES, ROOT, [PICTURE]);
     const semantic = await colours(theme, SEMANTIC, "probe.semantic", []);
+    // A semantic token no rule matches is given no style at all, so it keeps the colour
+    // its TextMate scopes already give it -- not the editor's, but not one of its own.
     const resolved = [
-        ...SCOPES.map(([label], i) => [label, picture.rows[i], picture.base]),
-        ...SEMANTIC.map(([label], i) => [label, semantic.rows[i], semantic.base]),
+        ...SCOPES.map(([label], i) => [label, picture.rows[i], picture.base, "as plain text"]),
+        ...SEMANTIC.map(([label], i) => [
+            label,
+            semantic.rows[i],
+            semantic.base,
+            "no rule of its own: the grammar's colour shows",
+        ]),
     ];
     const missing = resolved.filter(([, c, base]) => c === base);
     const styled = new Set(resolved.filter(([, c, base]) => c !== base).map(([, c]) => c));
     const tag = missing.length ? `\x1b[33m${missing.length} as plain text\x1b[0m` : "\x1b[32mall styled\x1b[0m";
     console.log(`${path.basename(file).padEnd(34)} ${String(styled.size).padStart(2)} distinct colours, ${tag}`);
-    for (const [label, c] of missing) {
-        console.log(`    \x1b[33m- ${label} (${c}, as plain text)\x1b[0m`);
+    for (const [label, c, , why] of missing) {
+        console.log(`    \x1b[33m- ${label} (${why === "as plain text" ? `${c}, ${why}` : why})\x1b[0m`);
     }
 }

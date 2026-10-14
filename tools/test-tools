@@ -90,11 +90,13 @@ def tm(*args):
     )
 
 
-def theme_check(rules, foreground="#ffffff"):
-    """theme-check's report on a theme with these token rules, without its colour codes."""
+def theme_check(rules, foreground="#ffffff", **extra):
+    """theme-check's report on a theme with these token rules, without its colour codes; a
+    foreground of None leaves the theme without one."""
     with tempfile.TemporaryDirectory() as tmp:
         theme = Path(tmp) / "theme.json"
-        theme.write_text(json.dumps({"colors": {"editor.foreground": foreground}, "tokenColors": rules}))
+        colors = {} if foreground is None else {"editor.foreground": foreground}
+        theme.write_text(json.dumps({"colors": colors, "tokenColors": rules, **extra}))
         result = tm("tools/theme-check.mjs", str(theme))
         assert result.returncode == 0, result.stderr
         return plain(result.stdout)
@@ -634,6 +636,41 @@ def _():
     # A more specific rule setting only a font style still takes the token, colour and all.
     out = theme_check([{"scope": "meta.function.environment.latex.tikz constant.numeric", "settings": orange}, {"scope": "constant.numeric.dimension", "settings": {"fontStyle": "italic"}}])
     assert "- dimension" in out, out
+
+
+@test("tools/theme-check builds the theme as the editor does before asking")
+def _():
+    black = {"foreground": "#000000"}
+    keyword = {"scope": "keyword.operator", "settings": black}
+    # No editor.foreground: VS Code uses the default for the kind of theme, #292929 for a
+    # light high-contrast one, so black operators stand out; against #000000 they would not.
+    out = theme_check([keyword], None, type="hcLight")
+    assert "- assignment" not in out, out
+    out = theme_check([{"scope": "keyword.operator", "settings": {"foreground": "#bbbbbb"}}], None, type="dark")
+    assert "- assignment (#bbbbbb" in out, out
+    # A rule with no scope is dropped by the editor, not applied to everything.
+    out = theme_check([{"settings": {"foreground": "#123456"}}, {"scope": "constant.numeric", "settings": {"foreground": "#ffffff"}}])
+    assert "- dimension" in out, out
+    # Short colours are spelt out before they are compared.
+    out = theme_check([{"scope": "constant.numeric", "settings": {"foreground": "#cccccc"}}], "#ccc")
+    assert "- dimension" in out, out
+    # A child combinator that does hold applies: a dimension's parent is the picture.
+    out = theme_check(
+        [{"scope": "constant.numeric", "settings": {"foreground": "#ff8800"}},
+         {"scope": "meta.function.environment.latex.tikz > constant.numeric", "settings": {"foreground": "#ffffff"}}]
+    )
+    assert "- dimension" in out, out
+    # A semantic token with no rule of its own is said to keep the grammar's colour.
+    assert "- macro (semantic) (no rule of its own" in theme_check([]), "semantic wording"
+
+
+@test("tools/theme-check refuses a theme whose rules sit in a TextMate theme file")
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        theme = Path(tmp) / "theme.json"
+        theme.write_text(json.dumps({"colors": {"editor.foreground": "#ffffff"}, "tokenColors": "./rules.tmTheme"}))
+        result = tm("tools/theme-check.mjs", str(theme))
+        assert result.returncode != 0 and "TextMate theme" in result.stderr, result
 
 
 @test("none of the above touched the working tree")
