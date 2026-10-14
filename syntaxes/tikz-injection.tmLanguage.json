@@ -169,8 +169,8 @@
                     "name": "keyword.control.path.tikz"
                 },
                 {
-                    "comment": "Closes the subpath, so it comes straight after a join or 'to' -- '-- cycle' is how it is nearly always written, and that covers one closing a braced subpath or followed by a new one -- or else is followed by the path going on: its end, a join, a node or options. Not a brace, a parenthesis or a plus, which follow the word in labels far more often ('duty cycle}', 'duty cycle (\\%)', 'cycle + 1') than in a path without a join before it. After 'to' it counts only where 'to' is a word of its own, since 'into' ends with it. Straight after the ']' closing the options of 'to' or 'edge' it counts too: a bracket there closes nothing else.",
-                    "match": "(?<![\\\\\\w])(?:(?<=--|-- |\\.\\.|\\.\\. |-\\||-\\| |\\|-|\\|- |\\bto |\\]|\\] )cycle(?![\\w])|cycle(?![\\w])(?=\\s*(?:;|-|\\.\\.|node\\b|coordinate\\b|\\[|%|$)))",
+                    "comment": "Closes the subpath, so it comes straight after a join or 'to' -- '-- cycle' is how it is nearly always written, and that covers one closing a braced subpath or followed by a new one -- or else is followed by the path going on: its end, a join, a node or options. Not a brace, a parenthesis or a plus, which follow the word in labels far more often ('duty cycle}', 'duty cycle (\\%)', 'cycle + 1') than in a path without a join before it. After 'to' it counts only where 'to' is a word of its own, since 'into' ends with it. Straight after a ']' -- the options of 'to' or 'edge' closing -- it counts only when the path goes on after it, a new subpath included, since a ']' also ends the options of a label, as in label={[red]cycle time}.",
+                    "match": "(?<![\\\\\\w])(?:(?<=--|-- |\\.\\.|\\.\\. |-\\||-\\| |\\|-|\\|- |\\bto )cycle(?![\\w])|(?<=\\]|\\] )cycle(?![\\w])(?=\\s*(?:[(+;]|-|\\.\\.|node\\b|coordinate\\b|\\[|%|$))|cycle(?![\\w])(?=\\s*(?:;|-|\\.\\.|node\\b|coordinate\\b|\\[|%|$)))",
                     "name": "keyword.control.path.tikz"
                 },
                 {
