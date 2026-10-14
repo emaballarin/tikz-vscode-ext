@@ -4,8 +4,8 @@
 //   ./tools/tm tools/theme-check.mjs <theme.json>...
 //
 // Mapping TikZ onto conventional scopes is only worth anything if themes really style
-// those scopes. This resolves each scope the way a theme does -- longest matching
-// dotted-segment prefix wins -- and reports which fall through to the default foreground.
+// those scopes. This resolves each token the way the editor does -- see resolve() -- and
+// reports which fall through to the default foreground.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -62,25 +62,68 @@ function strip(text) {
     return out.replace(/,(\s*[}\]])/g, "$1");
 }
 
-function resolve(theme, scope) {
-    let best = null;
-    let bestLen = -1;
-    for (const rule of theme.tokenColors ?? []) {
-        let selectors = rule.scope ?? [];
-        if (typeof selectors === "string") selectors = selectors.split(",");
-        for (const raw of selectors) {
-            const sel = raw.trim().split(/\s+/).pop(); // ignore ancestor constraints
-            if (!sel) continue;
-            const isPrefix = scope === sel || scope.startsWith(sel + ".");
-            // >=, not >: between equally specific selectors the later rule wins, and load()
-            // puts an including theme's rules after its base's for exactly that reason.
-            if (isPrefix && sel.length >= bestLen && rule.settings?.foreground) {
-                best = rule.settings.foreground;
-                bestLen = sel.length;
-            }
-        }
+// The scopes every token in a picture sits inside, outermost first. A rule written
+// "a b" applies to b only with a among its ancestors, and these are the ancestors a TikZ
+// token has. A semantic token is matched by its mapped scope alone, with none.
+const PICTURE = ["text.tex.latex", "meta.function.environment.latex.tikz"];
+
+const prefixOf = (selector, scope) => scope === selector || scope.startsWith(selector + ".");
+
+/** Lexicographic order of two rankings of the same length. */
+const compare = (a, b) => {
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return 0;
+};
+
+/**
+ * Whether a selector, split into its parts, matches the scope at `depth` of `path`: the
+ * last part that scope, and each part before it some scope further out, in order.
+ */
+function matchesAt(parts, path, depth) {
+    if (!prefixOf(parts.at(-1), path[depth])) return false;
+    let outer = depth - 1;
+    for (let k = parts.length - 2; k >= 0; k--) {
+        while (outer >= 0 && !prefixOf(parts[k], path[outer])) outer--;
+        if (outer < 0) return false;
+        outer--;
     }
-    return best;
+    return true;
+}
+
+/**
+ * The colour a theme gives the token whose scopes are `path`, outermost first, or null.
+ *
+ * The deepest scope any rule matches decides, and outer ones are consulted only when it
+ * has none -- getting that backwards is how this once reported Monokai as styling the
+ * option key while the editor painted it plain. Among the rules matching one scope the
+ * longer selector wins, then the one with more ancestors, then the later: load() puts an
+ * including theme's rules after its base's for exactly that reason. A selector with an
+ * exclusion ("a - b") is not modelled, and such a rule is left out rather than half-read.
+ * @param {{tokenColors?: Array<any>}} theme
+ * @param {string[]} path
+ */
+function resolve(theme, path) {
+    for (let depth = path.length - 1; depth >= 0; depth--) {
+        let best = null;
+        let rank = null;
+        (theme.tokenColors ?? []).forEach((rule, index) => {
+            if (!rule.settings?.foreground) return;
+            let selectors = rule.scope ?? [];
+            if (typeof selectors === "string") selectors = selectors.split(",");
+            for (const raw of selectors) {
+                if (/(^|\s)-/.test(raw.trim())) continue;
+                const parts = raw.replace(/>/g, " ").trim().split(/\s+/).filter(Boolean);
+                if (!parts.length || !matchesAt(parts, path, depth)) continue;
+                const candidate = [parts.at(-1).split(".").length, parts.length - 1, index];
+                if (!rank || compare(candidate, rank) > 0) {
+                    best = rule.settings.foreground;
+                    rank = candidate;
+                }
+            }
+        });
+        if (best) return best;
+    }
+    return null;
 }
 
 // VS Code's own themes are built as chains: dark_modern includes dark_plus includes
@@ -186,10 +229,7 @@ for (const file of files) {
     const foreground = theme.colors?.["editor.foreground"];
     const resolved = SCOPES.map(([label, ...scopes]) => [
         label,
-        scopes
-            .map((s) => resolve(theme, s))
-            .filter(Boolean)
-            .pop() ?? null,
+        resolve(theme, label.endsWith("(semantic)") ? scopes : [...PICTURE, ...scopes]),
     ]);
     const missing = resolved.filter(([, c]) => !c || same(c, foreground));
     const colours = new Set(resolved.map(([, c]) => c).filter((c) => c && !same(c, foreground)));

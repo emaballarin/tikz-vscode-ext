@@ -514,6 +514,28 @@ def _():
             assert result.stdout.strip() == "ran as node=1 with script.mjs", f"{name_short}: {result.stdout}"
 
 
+@test("tools/theme-check honours a rule's ancestor scopes, both ways")
+def _():
+    # A rule written "a b" applies to b only inside a. The picture's own scopes are the
+    # ancestors every TikZ token has; maths is not among them.
+    numeric = {"scope": "constant.numeric", "settings": {"foreground": "#ff8800"}}
+    cases = {
+        # More specific, and later -- but it needs maths around, which a dimension lacks.
+        "inapplicable": ([numeric, {"scope": "meta.math.block constant.numeric", "settings": {"foreground": "#ffffff"}}], False),
+        # The picture is around every TikZ token, so this applies, earlier or not.
+        "applicable-earlier": ([{"scope": "meta.function.environment.latex.tikz constant.numeric", "settings": {"foreground": "#ffffff"}}, numeric], True),
+        "applicable-later": ([numeric, {"scope": "meta.function.environment.latex.tikz constant.numeric", "settings": {"foreground": "#ffffff"}}], True),
+    }
+    for name, (rules, plain_text) in cases.items():
+        with tempfile.TemporaryDirectory() as tmp:
+            theme = Path(tmp) / f"{name}.json"
+            theme.write_text(json.dumps({"colors": {"editor.foreground": "#ffffff"}, "tokenColors": rules}))
+            result = node("tools/theme-check.mjs", str(theme))
+            assert result.returncode == 0, result.stderr
+            out = plain(result.stdout)
+            assert ("- dimension" in out) == plain_text, f"{name}: dimension should{'' if plain_text else ' not'} read as plain text:\n{out}"
+
+
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"
