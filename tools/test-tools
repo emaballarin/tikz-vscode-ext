@@ -550,6 +550,37 @@ def _():
             assert ("- dimension" in out) == plain_text, f"{name}: dimension should{'' if plain_text else ' not'} read as plain text:\n{out}"
 
 
+@test("tools/tm falls back to a bundle's only executable, and says so when there is none")
+def _():
+    # A bundle whose product.json names no nameShort that exists: one executable is taken,
+    # several are ambiguous and none is a bundle with nothing to run -- and either of
+    # those must be said, not end the script without a word.
+    def bundle(tmp, executables):
+        app = Path(tmp) / "Some Editor.app"
+        (app / "Contents" / "Resources" / "app").mkdir(parents=True)
+        (app / "Contents" / "MacOS").mkdir()
+        (app / "Contents" / "Resources" / "app" / "product.json").write_text('{"nameShort": "Absent"}')
+        for name in executables:
+            path = app / "Contents" / "MacOS" / name
+            path.write_text(f'#!/bin/sh\necho "ran {name}"\n')
+            path.chmod(0o755)
+        return app
+
+    def tm(app):
+        return subprocess.run(
+            [str(ROOT / "tools" / "tm")], env={**os.environ, "VSCODE": str(app)}, capture_output=True, text=True, check=False
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        result = tm(bundle(tmp, ["Editor Helper"]))
+        assert result.returncode == 0 and result.stdout.strip() == "ran Editor Helper", result
+    for executables in ([], ["One", "Two"]):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = tm(bundle(tmp, executables))
+            assert result.returncode != 0, f"{executables}: ran something"
+            assert "holds no VS Code executable" in result.stderr, f"{executables}: exited without a word: {result}"
+
+
 @test("none of the above touched the working tree")
 def _():
     assert digest(ROOT) == BEFORE, "a tool test modified the repository"

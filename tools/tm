@@ -25,17 +25,24 @@ binary() {
     only=""
     for candidate in "$1"/Contents/MacOS/*; do
       if [ -f "$candidate" ] && [ -x "$candidate" ]; then
-        [ -n "$only" ] && return
+        if [ -n "$only" ]; then
+          return 0
+        fi
         only=$candidate
       fi
     done
-    [ -n "$only" ] && echo "$only"
+    if [ -n "$only" ]; then
+      echo "$only"
+    fi
   elif [ -f "$1/resources/app/product.json" ]; then
     name=$(sed -n 's/.*"applicationName": *"\([^"]*\)".*/\1/p' "$1/resources/app/product.json" | head -1)
     if [ -n "$name" ] && [ -x "$1/$name" ]; then
       echo "$1/$name"
     fi
   fi
+  # Nothing found is an empty answer, not a failure: under set -e a non-zero status here
+  # would end the script at the assignment that asks, before it could say why.
+  return 0
 }
 
 if [ -n "$VSCODE" ]; then
