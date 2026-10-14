@@ -56,6 +56,13 @@ const wasm = fs.readFileSync(`${VSCODE}/node_modules.asar.unpacked/vscode-onigur
 process.noAsar = false;
 await oniguruma.loadWASM(wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength));
 
+/** vscode-textmate itself, and the regex engine it runs on, for scripts that need more of it. */
+export const textmate = vsctm;
+export const onigLib = Promise.resolve({
+    createOnigScanner: (s) => new oniguruma.OnigScanner(s),
+    createOnigString: (s) => new oniguruma.OnigString(s),
+});
+
 /**
  * A registry resolving the host grammars and ours, with our injections applied or not.
  * Without them the result is the stock LaTeX tokenisation, which is the baseline both for
@@ -64,10 +71,7 @@ await oniguruma.loadWASM(wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wa
  */
 export function registry({ inject = true } = {}) {
     return new vsctm.Registry({
-        onigLib: Promise.resolve({
-            createOnigScanner: (s) => new oniguruma.OnigScanner(s),
-            createOnigString: (s) => new oniguruma.OnigString(s),
-        }),
+        onigLib,
         loadGrammar: async (scopeName) => {
             const p = OURS[scopeName] ?? HOST[scopeName];
             if (!p) return null;

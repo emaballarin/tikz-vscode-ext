@@ -83,6 +83,23 @@ def node(*args):
     return subprocess.run([*runner, *args], cwd=str(ROOT), capture_output=True, text=True, timeout=120, check=False)
 
 
+def tm(*args):
+    """Run a script under VS Code's own Electron, as tools/tm does for a person."""
+    return subprocess.run(
+        [str(ROOT / "tools" / "tm"), *args], cwd=str(ROOT), capture_output=True, text=True, timeout=120, check=False
+    )
+
+
+def theme_check(rules, foreground="#ffffff"):
+    """theme-check's report on a theme with these token rules, without its colour codes."""
+    with tempfile.TemporaryDirectory() as tmp:
+        theme = Path(tmp) / "theme.json"
+        theme.write_text(json.dumps({"colors": {"editor.foreground": foreground}, "tokenColors": rules}))
+        result = tm("tools/theme-check.mjs", str(theme))
+        assert result.returncode == 0, result.stderr
+        return plain(result.stdout)
+
+
 def plain(text):
     """Output without its colour codes."""
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
@@ -438,7 +455,7 @@ def _():
                 }
             )
         )
-        result = node("tools/theme-check.mjs", str(child))
+        result = tm("tools/theme-check.mjs", str(child))
         assert result.returncode == 0, result.stderr
         out = plain(result.stdout)
         assert "dimension" not in out, f"the override was ignored:\n{out}"
@@ -544,7 +561,7 @@ def _():
         with tempfile.TemporaryDirectory() as tmp:
             theme = Path(tmp) / f"{name}.json"
             theme.write_text(json.dumps({"colors": {"editor.foreground": "#ffffff"}, "tokenColors": rules}))
-            result = node("tools/theme-check.mjs", str(theme))
+            result = tm("tools/theme-check.mjs", str(theme))
             assert result.returncode == 0, result.stderr
             out = plain(result.stdout)
             assert ("- dimension" in out) == plain_text, f"{name}: dimension should{'' if plain_text else ' not'} read as plain text:\n{out}"
@@ -579,6 +596,28 @@ def _():
             result = tm(bundle(tmp, executables))
             assert result.returncode != 0, f"{executables}: ran something"
             assert "holds no VS Code executable" in result.stderr, f"{executables}: exited without a word: {result}"
+
+
+@test("tools/theme-check reports what the editor's matcher paints, case by case")
+def _():
+    orange = {"foreground": "#ff8800"}
+    white = {"foreground": "#ffffff"}
+    # A theme colouring bare `meta` gives the whole picture that colour, node text included:
+    # a token left at it reads as plain text, though it is not the editor foreground.
+    out = theme_check([{"scope": "meta", "settings": {"foreground": "#9ab8d4"}}, {"scope": "constant.numeric", "settings": orange}], "#cce5ff")
+    assert "- option key (#9ab8d4" in out and "- dimension" not in out, out
+    # "a > b" needs a as the immediate parent; a dimension's is the picture, not the document.
+    out = theme_check([{"scope": "constant.numeric", "settings": orange}, {"scope": "text.tex.latex > constant.numeric", "settings": white}])
+    assert "- dimension" not in out, out
+    # A semantic token is matched alone, so a rule needing the picture around it misses it.
+    out = theme_check([{"scope": "variable", "settings": orange}, {"scope": "meta.function.environment.latex.tikz variable", "settings": white}])
+    assert "- macro (semantic)" not in out and "- coordinate" in out, out
+    # Between two ancestor rules, the more specific ancestor wins whatever the order.
+    out = theme_check([{"scope": "meta.function constant.numeric", "settings": orange}, {"scope": "text constant.numeric", "settings": white}])
+    assert "- dimension" not in out, out
+    # A more specific rule setting only a font style still takes the token, colour and all.
+    out = theme_check([{"scope": "meta.function.environment.latex.tikz constant.numeric", "settings": orange}, {"scope": "constant.numeric.dimension", "settings": {"fontStyle": "italic"}}])
+    assert "- dimension" in out, out
 
 
 @test("none of the above touched the working tree")
