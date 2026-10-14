@@ -377,6 +377,22 @@ def _():
         assert "](../../" not in readme, "a repository-relative link would be broken on the extension page"
 
 
+@test("tools/package keeps a repository-relative link's words when there is no repository")
+def _():
+    # Outside git, or with no origin, there is nothing to resolve ../../releases against,
+    # and the extension page cannot follow it: the words stay, the link goes.
+    for git, rename in ((False, False), (True, True)):
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = copy_tree(Path(tmp) / "tree", git=git)
+            if rename:
+                subprocess.run(["git", "remote", "rename", "origin", "upstream"], cwd=tree, check=True)
+            vsix, _ = package(tree)
+            with zipfile.ZipFile(vsix) as archive:
+                readme = archive.read("extension/README.md").decode("utf-8")
+            assert "](../../" not in readme, f"git={git}: a dead relative link shipped"
+            assert "Take a build from Releases:" in readme, f"git={git}: the words went with the link"
+
+
 @test("tools/package decodes the manifest as JSON and writes it as XML")
 def _():
     # A sed capture copies `\\` where package.json means one backslash, and an `&` or a `<`

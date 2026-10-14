@@ -120,9 +120,12 @@ done
 
 # Links relative to the repository page -- ../../releases -- resolve on GitHub, in whichever
 # repository holds the file, and nowhere else. The repository is the one the vsix is built
-# from, which is where the workflow publishes the releases they point at.
+# from, which is where the workflow publishes the releases they point at. With no
+# repository to resolve them against, the words stay and the link goes, as an image goes.
 if [ -n "$slug" ]; then
   edit "s|](\.\./\.\./\([^)]*\))|](https://github.com/${slug}/\1)|g" "$stage/extension/README.md"
+else
+  edit "s|\[\([^]]*\)\](\.\./\.\./[^)]*)|\1|g" "$stage/extension/README.md"
 fi
 
 cat > "$stage/extension.vsixmanifest" <<XML
