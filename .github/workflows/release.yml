@@ -1,5 +1,7 @@
 # Test, package, publish -- in that order, each gated on the one before.
 #
+# The tests run on Linux and on macOS; the macOS job has to pass before anything is published.
+#
 # The grammar is tested against VS Code's own TextMate engine and LaTeX grammar, taken from
 # the newest build of each quality rather than a pinned one. The latest Stable is what
 # people run today, so a difference there fails the run. The latest Insiders is what they
@@ -35,7 +37,31 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
+    # The harness on BSD userland: bsdtar, BSD sed, a macOS VS Code bundle, /var behind a
+    # link. Supporting macOS is a requirement, so a failure here stops the release below.
+    macos:
+        runs-on: macos-latest
+        timeout-minutes: 45
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: "22"
+
+            - name: Fetch the newest VS Code Stable
+              run: |
+                  stable=$(./tools/fetch-vscode stable)
+                  echo "VSCODE_STABLE=$stable" >> "$GITHUB_ENV"
+                  VSCODE="$stable" ./tools/tm -e 'console.log(`electron ${process.versions.electron}, node ${process.versions.node}`)'
+
+            - name: Test, against the latest Stable, on macOS
+              run: VSCODE="$VSCODE_STABLE" ./tools/test
+
     build:
+        needs: macos
         runs-on: ubuntu-latest
         # A run takes a few minutes; this only bounds one that hangs, well short of six hours,
         # with room for the canary's own ten on top of everything else.
