@@ -48,7 +48,7 @@ binary() {
 if [ -n "$VSCODE" ]; then
   code=$(binary "$VSCODE")
   if [ -z "$code" ]; then
-    echo "tm: VSCODE=$VSCODE holds no VS Code executable" >&2
+    echo "tm: VSCODE=$VSCODE holds no single VS Code executable to run" >&2
     exit 1
   fi
 else

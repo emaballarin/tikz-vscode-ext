@@ -613,7 +613,7 @@ def _():
         with tempfile.TemporaryDirectory() as tmp:
             result = tm(bundle(tmp, executables))
             assert result.returncode != 0, f"{executables}: ran something"
-            assert "holds no VS Code executable" in result.stderr, f"{executables}: exited without a word: {result}"
+            assert "holds no single VS Code executable" in result.stderr, f"{executables}: exited without a word: {result}"
 
 
 @test("tools/theme-check reports what the editor's matcher paints, case by case")
@@ -671,6 +671,34 @@ def _():
         theme.write_text(json.dumps({"colors": {"editor.foreground": "#ffffff"}, "tokenColors": "./rules.tmTheme"}))
         result = tm("tools/theme-check.mjs", str(theme))
         assert result.returncode != 0 and "TextMate theme" in result.stderr, result
+
+
+@test("tools/tm searches on past a broken install to a working one")
+def _():
+    # The usual places are tried in turn; one holding nothing to run must not end the search.
+    # Two stand-in bundles under a temporary HOME: Stable broken, Insiders working, in the
+    # order tools/tm tries them. A real VS Code in /Applications, tried before either, would
+    # be found first, so there is nothing to show on such a Mac.
+    if any(Path(f"/Applications/Visual Studio Code{q}.app").exists() for q in ("", " - Insiders")):
+        print("skip: a VS Code in /Applications comes first", file=sys.stderr)
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        apps = Path(tmp) / "Applications"
+        broken = apps / "Visual Studio Code.app" / "Contents"
+        (broken / "MacOS").mkdir(parents=True)
+        (broken / "Resources" / "app").mkdir(parents=True)
+        (broken / "Resources" / "app" / "product.json").write_text('{"nameShort": "Code"}')
+        good = apps / "Visual Studio Code - Insiders.app" / "Contents"
+        (good / "MacOS").mkdir(parents=True)
+        (good / "Resources" / "app").mkdir(parents=True)
+        (good / "Resources" / "app" / "product.json").write_text('{"nameShort": "Code - Insiders"}')
+        executable = good / "MacOS" / "Code - Insiders"
+        executable.write_text('#!/bin/sh\necho ran insiders\n')
+        executable.chmod(0o755)
+        env = {k: v for k, v in os.environ.items() if k != "VSCODE"}
+        env["HOME"] = tmp
+        result = subprocess.run([str(ROOT / "tools" / "tm")], env=env, capture_output=True, text=True, check=False)
+        assert result.returncode == 0 and result.stdout.strip() == "ran insiders", result
 
 
 @test("none of the above touched the working tree")

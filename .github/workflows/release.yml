@@ -210,6 +210,7 @@ jobs:
                   PY
 
             - name: Publish the tagged release
+              id: tagged
               if: github.ref_type == 'tag' && needs.macos.result == 'success'
               env:
                   GH_TOKEN: ${{ github.token }}
@@ -220,6 +221,7 @@ jobs:
                     "${{ steps.package.outputs.path }}#${{ steps.package.outputs.name }}"
 
             - name: Publish the rolling edge build
+              id: edge
               if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch && needs.macos.result == 'success'
               env:
                   GH_TOKEN: ${{ github.token }}
@@ -297,6 +299,8 @@ jobs:
                     echo "| channel | ${{ steps.version.outputs.channel }} |"
                     echo "| commit | \`${GITHUB_SHA:0:7}\` |"
                     echo "| macOS | ${{ needs.macos.result }} |"
+                    # skipped means not published: not a tag or the default branch, or macOS failed.
+                    echo "| published | tag ${{ steps.tagged.outcome || 'not reached' }}, edge ${{ steps.edge.outcome || 'not reached' }} |"
                     echo "| tested on | $(build "$VSCODE_STABLE") |"
                     echo "| canary | $(build "$VSCODE_INSIDER") ${CANARY:-did not run, or did not finish} |"
                   } >> "$GITHUB_STEP_SUMMARY"
